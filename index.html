@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MetaClima - Consenso Meteorológico Épico</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     /* Estilos Glassmorphism */
     .glass-card {
@@ -90,6 +92,25 @@
     @keyframes locationPulse{50%{opacity:.42}}
     @media(prefers-reduced-motion:reduce){#weather-atmosphere{display:none}.glass-card{transform:none!important}.weather-hero-icon{animation:none!important}}
 
+    .weather-map-shell{height:150px;margin-top:16px;border-radius:20px;overflow:hidden;border:1px solid rgba(125,211,252,.28);position:relative;background:rgba(15,23,42,.65);box-shadow:inset 0 0 30px rgba(56,189,248,.1)}
+    #weather-map{height:100%;width:100%;filter:saturate(.82) contrast(1.05)}
+    .map-expand-hit{position:absolute;right:8px;top:8px;z-index:500;background:rgba(15,23,42,.76);border:1px solid rgba(255,255,255,.3);color:#fde68a;border-radius:10px;padding:6px 8px;font-size:10px;font-weight:800;backdrop-filter:blur(8px);cursor:pointer}
+    .map-caption{position:absolute;left:9px;bottom:8px;z-index:500;background:rgba(15,23,42,.72);border:1px solid rgba(125,211,252,.25);border-radius:9px;padding:5px 7px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(224,242,254,.9);pointer-events:none}
+    .weather-detail-panel{margin-top:16px;padding:12px;border:1px solid rgba(251,191,36,.25);border-radius:20px;background:linear-gradient(135deg,rgba(251,191,36,.09),rgba(56,189,248,.09));cursor:pointer;transition:transform .25s ease,border-color .25s ease,background .25s ease}
+    .weather-detail-panel:hover{transform:translateY(-2px);border-color:rgba(251,191,36,.55);background:rgba(255,255,255,.14)}
+    .detail-kicker{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#fcd34d;font-weight:900}
+    .detail-main{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+    .detail-value{font-size:22px;font-weight:900;color:#e0f2fe}
+    .detail-sub{font-size:10px;color:rgba(226,232,240,.75);line-height:1.35}
+    #weather-modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(18px)}
+    #weather-modal.open{display:flex}
+    .weather-modal-card{width:min(94vw,900px);max-height:90vh;overflow:auto;border:1px solid rgba(255,255,255,.28);border-radius:28px;padding:14px;background:rgba(15,23,42,.88);box-shadow:0 30px 100px rgba(0,0,0,.65);animation:fadeIn .35s ease-out}
+    #expanded-map{height:min(62vh,560px);min-height:300px;border-radius:20px;overflow:hidden}
+    .modal-close{float:right;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:5px 9px;cursor:pointer}
+    .leaflet-control-attribution{font-size:8px!important;background:rgba(15,23,42,.72)!important;color:#cbd5e1!important}
+    .leaflet-control-attribution a{color:#7dd3fc!important}
+    .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0;border:1px solid rgba(125,211,252,.25)}
+    @media(max-width:767px){.weather-map-shell{height:132px}.weather-modal-card{padding:10px;border-radius:22px}#expanded-map{height:58vh;min-height:280px}#weather-atmosphere-hud{left:12px;bottom:36px;font-size:8px}footer{padding-bottom:28px!important}}
   </style>
 </head>
 <body id="app-bg" class="bg-slate-950 text-white min-h-screen flex flex-col justify-between font-sans bg-weather relative overflow-x-hidden selection:bg-amber-400 selection:text-slate-900"
@@ -152,6 +173,24 @@
 
       <!-- TIRA DESLIZABLE DE 3 TARJETAS -->
       <div id="cards-container" class="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory py-4 px-[7.5vw] md:px-0 md:justify-center scroll-smooth items-stretch">
+
+        <!-- TARJETA TEMPORAL: AYER -->
+        <div id="card-yesterday" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-[340px] glass-card rounded-3xl p-5 flex flex-col justify-between border border-violet-300/25 temporal-card">
+          <div>
+            <div class="flex items-center justify-between mb-4 border-b border-white/15 pb-3">
+              <h3 class="font-extrabold text-violet-200 text-sm uppercase tracking-wider flex items-center gap-2"><span>◀</span> Ayer</h3>
+              <span class="text-[10px] font-bold text-violet-100 bg-violet-500/20 border border-violet-300/30 px-2.5 py-1 rounded-full">Histórico real</span>
+            </div>
+            <div class="text-center mb-4"><div id="yesterday-date" class="text-[11px] uppercase tracking-widest text-slate-300">--</div><div id="yesterday-icon" class="text-5xl my-2">--</div><div id="yesterday-condition" class="font-bold text-slate-100">Cargando histórico</div></div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Máxima</div><div id="yesterday-max" class="text-xl font-black text-amber-200">--°</div></div>
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Mínima</div><div id="yesterday-min" class="text-xl font-black text-sky-200">--°</div></div>
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Lluvia</div><div id="yesterday-rain" class="text-xl font-black text-sky-300">-- mm</div></div>
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Viento máx.</div><div id="yesterday-wind" class="text-xl font-black text-amber-100">--</div></div>
+            </div>
+          </div>
+          <button type="button" class="mt-4 weather-detail-panel text-left" onclick="abrirDetalle('yesterday')"><div class="detail-kicker">Comparación histórica</div><div id="yesterday-summary" class="detail-sub mt-1">Tocar para ver detalle de ayer.</div></button>
+        </div>
 
         <!-- TARJETA 1: Variables Locales -->
         <div id="card-left" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-[350px] glass-card rounded-3xl p-6 flex flex-col justify-between border border-white/25">
@@ -238,6 +277,24 @@
 
         </div>
 
+        <!-- TARJETA TEMPORAL: MAÑANA -->
+        <div id="card-tomorrow" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[330px] md:w-[350px] glass-card rounded-3xl p-5 flex flex-col justify-between border border-emerald-300/25 temporal-card">
+          <div>
+            <div class="flex items-center justify-between mb-4 border-b border-white/15 pb-3">
+              <h3 class="font-extrabold text-emerald-200 text-sm uppercase tracking-wider flex items-center gap-2"><span>▶</span> Mañana</h3>
+              <span class="text-[10px] font-bold text-emerald-100 bg-emerald-500/20 border border-emerald-300/30 px-2.5 py-1 rounded-full">Pronóstico real</span>
+            </div>
+            <div class="text-center mb-4"><div id="tomorrow-date" class="text-[11px] uppercase tracking-widest text-slate-300">--</div><div id="tomorrow-icon" class="text-5xl my-2">--</div><div id="tomorrow-condition" class="font-bold text-slate-100">Cargando pronóstico</div></div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Máxima</div><div id="tomorrow-max" class="text-xl font-black text-amber-200">--°</div></div>
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Mínima</div><div id="tomorrow-min" class="text-xl font-black text-sky-200">--°</div></div>
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Lluvia</div><div id="tomorrow-pop" class="text-xl font-black text-sky-300">--%</div></div>
+              <div class="glass-pill rounded-2xl p-3 text-center"><div class="text-[10px] text-slate-300">Viento máx.</div><div id="tomorrow-wind" class="text-xl font-black text-amber-100">--</div></div>
+            </div>
+          </div>
+          <button type="button" class="mt-4 weather-detail-panel text-left" onclick="abrirDetalle('tomorrow')"><div class="detail-kicker">Ventana de mañana</div><div id="tomorrow-summary" class="detail-sub mt-1">Tocar para ver detalle del pronóstico.</div></button>
+        </div>
+
         <!-- TARJETA 3: Próximas 12 Horas (Optimizada sin cortes ni scroll extra) -->
         <div id="card-right" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[350px] md:w-[400px] glass-card rounded-3xl p-5 flex flex-col justify-between border border-white/25">
           
@@ -257,6 +314,16 @@
             </div>
           </div>
 
+          <div class="weather-detail-panel" data-expand-module="conditions" onclick="abrirDetalle('conditions')" role="button" tabindex="0">
+            <div class="detail-kicker">Lectura de atmósfera</div>
+            <div class="detail-main"><span id="wind-direction-icon" class="text-3xl">↗</span><span id="wind-detail" class="detail-value">-- km/h</span></div>
+            <div id="wind-detail-sub" class="detail-sub">Tocar para ver viento, visibilidad, lluvia y presión.</div>
+          </div>
+          <div class="weather-map-shell" data-expand-module="map" title="Tocar para ampliar mapa">
+            <div id="weather-map"></div>
+            <button class="map-expand-hit" type="button" onclick="abrirMapa(event)">⛶ AMPLIAR</button>
+            <span class="map-caption">Cielo local · GPS · Radar</span>
+          </div>
           <div class="mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-[11px] font-semibold text-slate-300">
             <span>Bloque continuo</span>
             <span class="text-amber-300 font-bold">12 Horas Siguientes</span>
@@ -270,11 +337,63 @@
 
   </main>
 
+  <div id="weather-modal" role="dialog" aria-modal="true" aria-label="Detalle meteorológico">
+    <div class="weather-modal-card">
+      <button class="modal-close" type="button" onclick="cerrarModal()">Cerrar ×</button>
+      <div id="modal-map-view">
+        <div class="detail-kicker mb-2">Mapa meteorológico local</div>
+        <p id="map-modal-caption" class="text-xs text-slate-300 mb-3">Ubicación GPS y condiciones actuales</p>
+        <div id="expanded-map"></div>
+      </div>
+      <div id="modal-conditions-view" class="hidden">
+        <div class="detail-kicker mb-2">Lectura de atmósfera</div>
+        <h3 class="text-2xl font-black text-white mb-4">Condiciones ampliadas</h3>
+        <div id="conditions-detail-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+      </div>
+    </div>
+  </div>
+
   <footer class="w-full p-4 text-center text-xs font-medium text-slate-300 z-10">
     <p>MetaClima — Consenso meteorológico optimizado</p>
   </footer>
 
   <script>
+    let weatherMap=null,expandedMap=null,mapMarker=null,expandedMarker=null,mapCircle=null,expandedCircle=null,radarLayer=null,expandedRadarLayer=null;
+    let currentCoords={lat:null,lon:null}, temporalData={};
+    const weatherLabel=code=>{if(code==null)return 'Sin datos';if(code>=95)return 'Tormenta';if(code>=80)return 'Lluvias fuertes';if(code>=61)return 'Lluvia';if(code>=51)return 'Llovizna';if(code>=45)return 'Nublado';if(code>=3)return 'Parcialmente nublado';if(code>=1)return 'Despejado con nubes';return 'Despejado';};
+    const weatherIcon=code=>{if(code==null)return '·';if(code>=95)return '⛈️';if(code>=80)return '🌧️';if(code>=61)return '🌦️';if(code>=51)return '🌫️';if(code>=45)return '☁️';if(code>=3)return '⛅';if(code>=1)return '🌤️';return '☀️';};
+    const prettyDate=date=>new Intl.DateTimeFormat('es-AR',{weekday:'long',day:'numeric',month:'short'}).format(new Date(`${date}T12:00:00`));
+
+    function initWeatherMaps(){
+      if(!window.L||!document.getElementById('weather-map'))return;
+      const base={attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18};
+      weatherMap=L.map('weather-map',{zoomControl:false,attributionControl:true,scrollWheelZoom:false,dragging:false,touchZoom:false,doubleClickZoom:false}).setView([0,0],2);
+      expandedMap=L.map('expanded-map',{zoomControl:true,attributionControl:true}).setView([0,0],2);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',base).addTo(weatherMap);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',base).addTo(expandedMap);
+    }
+    async function addRadarLayer(){
+      if(!weatherMap||!expandedMap)return;
+      try{const response=await fetch('https://api.rainviewer.com/public/weather-maps.json');const data=await response.json();const frame=data.radar?.past?.at(-1);if(!frame)return;const url=`${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_0.png`;radarLayer?.remove();expandedRadarLayer?.remove();radarLayer=L.tileLayer(url,{opacity:.42,maxNativeZoom:7,maxZoom:18,zIndex:300}).addTo(weatherMap);expandedRadarLayer=L.tileLayer(url,{opacity:.5,maxNativeZoom:7,maxZoom:18,zIndex:300}).addTo(expandedMap);}catch(error){console.info('Radar no disponible; se mantiene mapa base.');}
+    }
+    function updateWeatherMaps(lat,lon,temp,pop,wind){
+      if(!weatherMap||!expandedMap||lat==null||lon==null)return;const center=[lat,lon];weatherMap.setView(center,10,{animate:true});expandedMap.setView(center,10,{animate:false});const popup=`<strong>MetaClima · Hoy</strong><br>${Math.round(temp)}°C · ${pop}% lluvia<br>${wind} km/h de viento`;mapMarker?.remove();expandedMarker?.remove();mapCircle?.remove();expandedCircle?.remove();mapMarker=L.circleMarker(center,{radius:8,color:'#fbbf24',weight:3,fillColor:'#38bdf8',fillOpacity:.9}).addTo(weatherMap);expandedMarker=L.circleMarker(center,{radius:10,color:'#fbbf24',weight:3,fillColor:'#38bdf8',fillOpacity:.9}).addTo(expandedMap).bindPopup(popup).openPopup();mapCircle=L.circle(center,{radius:Math.max(900,Math.min(7000,wind*120+900)),color:'#38bdf8',weight:1,fillColor:'#38bdf8',fillOpacity:.08}).addTo(weatherMap);expandedCircle=L.circle(center,{radius:Math.max(900,Math.min(7000,wind*120+900)),color:'#38bdf8',weight:1,fillColor:'#38bdf8',fillOpacity:.08}).addTo(expandedMap);addRadarLayer();
+    }
+    function renderTemporalCards(om,historical){
+      const d=om.daily;const h=historical?.daily;if(!d?.time||d.time.length<2)return;const yesterday={date:h?.time?.[0]||new Date(Date.now()-86400000).toISOString().slice(0,10),max:h?.temperature_2m_max?.[0]??null,min:h?.temperature_2m_min?.[0]??null,rain:h?.precipitation_sum?.[0]??null,wind:h?.wind_speed_10m_max?.[0]??null,code:h?.weather_code?.[0]??null,pop:null};const tomorrow={date:d.time[1],max:d.temperature_2m_max[1],min:d.temperature_2m_min[1],rain:d.precipitation_sum[1],wind:d.wind_speed_10m_max[1],code:d.weather_code[1],pop:d.precipitation_probability_max?.[1]??null};temporalData={yesterday,tomorrow};
+      const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+      set('yesterday-date',prettyDate(yesterday.date));set('yesterday-icon',weatherIcon(yesterday.code));set('yesterday-condition',weatherLabel(yesterday.code));set('yesterday-max',`${Math.round(yesterday.max)}°`);set('yesterday-min',`${Math.round(yesterday.min)}°`);set('yesterday-rain',`${Number(yesterday.rain||0).toFixed(1)} mm`);set('yesterday-wind',`${Math.round(yesterday.wind||0)} km/h`);set('yesterday-summary',`Ayer: ${Math.round(yesterday.max)}°/${Math.round(yesterday.min)}°, ${Number(yesterday.rain||0).toFixed(1)} mm de lluvia y viento máximo de ${Math.round(yesterday.wind||0)} km/h.`);
+      set('tomorrow-date',prettyDate(tomorrow.date));set('tomorrow-icon',weatherIcon(tomorrow.code));set('tomorrow-condition',weatherLabel(tomorrow.code));set('tomorrow-max',`${Math.round(tomorrow.max)}°`);set('tomorrow-min',`${Math.round(tomorrow.min)}°`);set('tomorrow-pop',`${tomorrow.pop==null?'--':Math.round(tomorrow.pop)}%`);set('tomorrow-wind',`${Math.round(tomorrow.wind||0)} km/h`);set('tomorrow-summary',`Mañana: ${Math.round(tomorrow.max)}°/${Math.round(tomorrow.min)}°, lluvia máxima ${tomorrow.pop==null?'sin dato':Math.round(tomorrow.pop)+'%'} y viento máximo de ${Math.round(tomorrow.wind||0)} km/h.`);
+    }
+    function populateDetail(kind){const grid=document.getElementById('conditions-detail-grid');if(!grid)return;if(kind==='yesterday'||kind==='tomorrow'){const d=temporalData[kind];if(!d)return;const label=kind==='yesterday'?'Ayer · histórico real':'Mañana · pronóstico real';grid.innerHTML=`<div class="col-span-full text-sm font-black text-amber-200 mb-1">${label} · ${prettyDate(d.date)}</div>`+[['Estado',weatherLabel(d.code)],['Máxima',`${Math.round(d.max)}°C`],['Mínima',`${Math.round(d.min)}°C`],['Precipitación',`${Number(d.rain||0).toFixed(1)} mm`],['Prob. lluvia',d.pop==null?'--':`${Math.round(d.pop)}%`],['Viento máximo',`${Math.round(d.wind||0)} km/h`]].map(([label,value])=>`<div class="glass-pill rounded-2xl p-3"><div class="text-[10px] uppercase tracking-wider text-sky-200">${label}</div><div class="text-lg font-black text-white mt-1">${value}</div></div>`).join('');return;}const current=latestWeather?.current||{};grid.innerHTML=[['Temperatura',`${Math.round(latestWeather?.temp||0)}°C`],['Lluvia',`${latestWeather?.pop??'--'}%`],['Viento',`${latestWeather?.wind??'--'} km/h`],['Humedad',`${current.relative_humidity_2m??'--'}%`],['Presión',`${Math.round(current.surface_pressure||0)} hPa`],['Nubosidad',`${current.cloud_cover??'--'}%`]].map(([label,value])=>`<div class="glass-pill rounded-2xl p-3"><div class="text-[10px] uppercase tracking-wider text-sky-200">${label}</div><div class="text-lg font-black text-white mt-1">${value}</div></div>`).join('');}
+    function abrirMapa(event){event?.stopPropagation?.();document.getElementById('modal-map-view').classList.remove('hidden');document.getElementById('modal-conditions-view').classList.add('hidden');document.getElementById('weather-modal').classList.add('open');setTimeout(()=>expandedMap?.invalidateSize(),80);}
+    function abrirDetalle(kind){document.getElementById('modal-map-view').classList.add('hidden');document.getElementById('modal-conditions-view').classList.remove('hidden');populateDetail(kind);document.getElementById('weather-modal').classList.add('open');}
+    function cerrarModal(){document.getElementById('weather-modal').classList.remove('open');}
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')cerrarModal();});document.getElementById('weather-modal')?.addEventListener('click',event=>{if(event.target.id==='weather-modal')cerrarModal();});
+    function abrirDetalleBloque(element){const grid=document.getElementById('conditions-detail-grid');const text=element.innerText.trim().split(/\n/).filter(Boolean);grid.innerHTML=`<div class="col-span-full text-sm font-black text-amber-200 mb-1">Detalle meteorológico</div><div class="glass-pill rounded-2xl p-4 col-span-full"><div class="text-xs uppercase tracking-wider text-sky-200">${text[0]||'Variable'}</div><div class="text-2xl font-black text-white mt-2">${text.slice(1).join(' · ')||'Información disponible'}</div><div class="text-xs text-slate-300 mt-3">Dato consultado dentro del consenso actual de MetaClima.</div></div>`;document.getElementById('modal-map-view').classList.add('hidden');document.getElementById('modal-conditions-view').classList.remove('hidden');document.getElementById('weather-modal').classList.add('open');}
+    document.querySelectorAll('#card-left .glass-pill,#card-center .glass-pill,#card-right .glass-pill,#card-yesterday .glass-pill,#card-tomorrow .glass-pill').forEach(block=>{block.setAttribute('role','button');block.setAttribute('tabindex','0');block.addEventListener('click',()=>abrirDetalleBloque(block));block.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirDetalleBloque(block);}});});
+    initWeatherMaps();
+
     async function obtenerClima() {
       const intro = document.getElementById('intro-screen');
       const loading = document.getElementById('loading-screen');
@@ -294,16 +413,18 @@
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude: lat, longitude: lon } = pos.coords;
+          currentCoords={lat,lon};
           actualizarFondoPorUbicacion(lat, lon);
           document.getElementById('coords-text').textContent = `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
 
           try {
-            const [openMeteo, metNorway] = await Promise.all([
+            const [openMeteo, metNorway, historical] = await Promise.all([
               fetchOpenMeteo(lat, lon),
-              fetchMetNorway(lat, lon).catch(() => null)
+              fetchMetNorway(lat, lon).catch(() => null),
+              fetchHistoricalYesterday(lat, lon).catch(() => null)
             ]);
 
-            renderDatos(openMeteo, metNorway);
+            renderDatos(openMeteo, metNorway, historical);
 
             loading.classList.add('hidden');
             dashboard.classList.remove('hidden');
@@ -375,7 +496,13 @@
     }
 
     async function fetchOpenMeteo(lat, lon) {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,surface_pressure,cloud_cover,wind_speed_10m&hourly=temperature_2m,precipitation_probability&forecast_days=2`);
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,surface_pressure,cloud_cover,wind_speed_10m,wind_direction_10m,visibility&hourly=temperature_2m,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&forecast_days=2&timezone=auto`);
+      return await res.json();
+    }
+    async function fetchHistoricalYesterday(lat, lon) {
+      const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+      const res=await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${yesterday}&end_date=${yesterday}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=auto`);
+      if(!res.ok)throw new Error(`Historical weather ${res.status}`);
       return await res.json();
     }
 
@@ -391,7 +518,7 @@
       }
     }
 
-    function renderDatos(om, met) {
+    function renderDatos(om, met, historical=null) {
       const omTemp = om.current.temperature_2m;
       const omPop = om.hourly.precipitation_probability[0] || 0;
       const omWind = om.current.wind_speed_10m;
@@ -419,6 +546,9 @@
       document.getElementById('cloud-val').textContent = `${om.current.cloud_cover}%`;
 
       actualizarEstiloPorClima(avgTemp, avgPop, om.current.cloud_cover);
+      latestWeather={current:om.current,temp:Number(avgTemp),pop:avgPop,wind:avgWind};
+      renderTemporalCards(om,historical);
+      updateWeatherMaps(currentCoords.lat,currentCoords.lon,Number(avgTemp),avgPop,avgWind);
 
       // RENDER PRÓXIMAS 12 HORAS
       const hourlyBox = document.getElementById('hourly-container');
