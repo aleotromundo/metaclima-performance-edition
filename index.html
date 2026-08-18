@@ -146,7 +146,7 @@
       <div id="cards-container" class="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory py-4 px-[7.5vw] md:px-0 md:justify-center scroll-smooth items-stretch">
 
         <!-- TARJETA 1: Variables Locales -->
-        <div id="card-left" class="snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-[350px] glass-card rounded-3xl p-6 flex flex-col justify-between border border-white/25">
+        <div id="card-left" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-[350px] glass-card rounded-3xl p-6 flex flex-col justify-between border border-white/25">
           <div>
             <div class="flex items-center justify-between mb-5 border-b border-white/15 pb-3">
               <h3 class="font-extrabold text-amber-300 text-sm uppercase tracking-wider flex items-center gap-2">
@@ -182,7 +182,7 @@
         </div>
 
         <!-- TARJETA 2: Consenso Promedio (Hero Épico) -->
-        <div id="card-center" class="snap-center shrink-0 w-[85vw] sm:w-[360px] md:w-[390px] glass-card rounded-3xl p-6 md:p-8 flex flex-col justify-between border-2 border-white/30 shadow-2xl relative overflow-hidden hero-glow-sun">
+        <div id="card-center" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[360px] md:w-[390px] glass-card rounded-3xl p-6 md:p-8 flex flex-col justify-between border-2 border-white/30 shadow-2xl relative overflow-hidden hero-glow-sun">
           
           <div class="text-center relative z-10">
             <span id="city-tag" class="inline-block px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500/30 to-sky-500/30 text-amber-200 border border-amber-300/40 mb-2 shadow-lg">
@@ -231,7 +231,7 @@
         </div>
 
         <!-- TARJETA 3: Próximas 12 Horas (Optimizada sin cortes ni scroll extra) -->
-        <div id="card-right" class="snap-center shrink-0 w-[85vw] sm:w-[350px] md:w-[400px] glass-card rounded-3xl p-5 flex flex-col justify-between border border-white/25">
+        <div id="card-right" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[350px] md:w-[400px] glass-card rounded-3xl p-5 flex flex-col justify-between border border-white/25">
           
           <div>
             <div class="flex items-center justify-between border-b border-white/15 pb-3 mb-3">
@@ -484,6 +484,20 @@
         arrowRight.classList.add('flex');
       }
     }
+    /* Interacción premium de tarjetas: mouse en desktop y pointer/touch en móvil */
+    const tiltCards=document.querySelectorAll('[data-tilt-card]');
+    tiltCards.forEach(card=>{
+      let activePointer=null;
+      const resetTilt=()=>{card.style.transform='perspective(1100px) rotateX(0deg) rotateY(0deg) translateZ(0px)';card.style.transition='transform .48s cubic-bezier(.2,.8,.2,1), border-color .3s ease, box-shadow .3s ease';};
+      const applyTilt=(event)=>{const rect=card.getBoundingClientRect();const px=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));const py=Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height));const max=window.innerWidth<768?7:11;const rx=(.5-py)*max;const ry=(px-.5)*max;card.style.transition='transform .08s ease-out, border-color .2s ease, box-shadow .2s ease';card.style.transform=`perspective(1100px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(9px)`;};
+      card.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse')activePointer=event.pointerId;});
+      card.addEventListener('pointermove',event=>{if(activePointer===null||event.pointerType==='mouse'||event.pointerId===activePointer)applyTilt(event);});
+      card.addEventListener('pointerdown',event=>{activePointer=event.pointerId;applyTilt(event);});
+      card.addEventListener('pointerup',()=>{activePointer=null;resetTilt();});
+      card.addEventListener('pointercancel',()=>{activePointer=null;resetTilt();});
+      card.addEventListener('pointerleave',()=>{activePointer=null;resetTilt();});
+    });
+
     /* Motor de atmósfera: profundidad, partículas y clima reactivo */
     const atmosphereCanvas=document.getElementById('weather-atmosphere');
     const atmosphereCtx=atmosphereCanvas.getContext('2d');
@@ -491,7 +505,7 @@
     function resizeAtmosphere(){const scale=Math.min(devicePixelRatio||1,2);aw=innerWidth;ah=innerHeight;atmosphereCanvas.width=aw*scale;atmosphereCanvas.height=ah*scale;atmosphereCanvas.style.width=aw+'px';atmosphereCanvas.style.height=ah+'px';atmosphereCtx.setTransform(scale,0,0,scale,0,0);particles=Array.from({length:Math.min(140,Math.floor(aw/8))},()=>({x:Math.random()*aw,y:Math.random()*ah,z:.2+Math.random()*.8,s:.5+Math.random()*2,v:.3+Math.random()*1.5}));}
     function actualizarAtmoPorClima(temp,pop,cloud){atmoMode=pop>50?'rain':cloud>60?'cloud':temp>24?'sun':'clear';const label=document.getElementById('weather-atmosphere-hud');if(label)label.textContent=`ATMOSPHERE / ${atmoMode.toUpperCase()} FIELD`;}
     function renderAtmosphere(now){if(now-lastFrame<28){requestAnimationFrame(renderAtmosphere);return}lastFrame=now;const ctx=atmosphereCtx;ctx.clearRect(0,0,aw,ah);const cx=aw*(.5+(atmoMouse.x-.5)*.06),cy=ah*(.34+(atmoMouse.y-.5)*.04);const palette={sun:['251,191,36','245,158,11'],rain:['56,189,248','37,99,235'],cloud:['203,213,225','100,116,139'],clear:['125,211,252','99,102,241']}[atmoMode];const glow=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(aw,ah)*.55);glow.addColorStop(0,`rgba(${palette[0]},.16)`);glow.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,aw,ah);const horizon=ah*.7;ctx.strokeStyle=`rgba(${palette[0]},.065)`;ctx.lineWidth=1;for(let i=0;i<13;i++){const y=horizon+Math.pow(i/12,1.7)*ah*.35;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(aw,y);ctx.stroke();}for(let i=-12;i<=12;i++){ctx.beginPath();ctx.moveTo(aw/2+i*38,horizon);ctx.lineTo(aw/2+i*135,ah);ctx.stroke();}if(atmoMode==='sun'||atmoMode==='clear'){ctx.save();ctx.translate(cx,cy);ctx.rotate(now*.00002);const r=Math.min(aw,ah)*.09;const sun=ctx.createRadialGradient(0,0,0,0,0,r*2);sun.addColorStop(0,'rgba(255,241,180,.7)');sun.addColorStop(.2,`rgba(${palette[1]},.3)`);sun.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sun;ctx.beginPath();ctx.arc(0,0,r*2,0,Math.PI*2);ctx.fill();ctx.strokeStyle=`rgba(${palette[0]},.16)`;for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(0,0,r*(1.3+i*.3),r*(.45+i*.12),now*.00006+i,0,Math.PI*2);ctx.stroke();}ctx.restore();}ctx.save();for(const p of particles){if(atmoMode==='rain'){p.y+=p.v*5;p.x-=p.v*.5;if(p.y>ah){p.y=-20;p.x=Math.random()*aw;}ctx.strokeStyle=`rgba(${palette[0]},${.12+p.z*.2})`;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-2,p.y+10+p.z*13);ctx.stroke();}else{p.y-=p.v*.22;p.x+=Math.sin(now*.001+p.z*7)*.12;if(p.y<0)p.y=ah;ctx.fillStyle=`rgba(${palette[0]},${.04+p.z*.16})`;ctx.beginPath();ctx.arc(p.x,p.y,p.s*p.z,0,Math.PI*2);ctx.fill();}}ctx.restore();requestAnimationFrame(renderAtmosphere);}
-    addEventListener('resize',resizeAtmosphere);addEventListener('pointermove',event=>{atmoMouse.x=event.clientX/aw;atmoMouse.y=event.clientY/ah;document.querySelectorAll('.glass-card').forEach(card=>{const rect=card.getBoundingClientRect();if(event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom){const rx=(event.clientY-(rect.top+rect.height/2))/rect.height*-3,ry=(event.clientX-(rect.left+rect.width/2))/rect.width*3;card.style.transform=`perspective(1100px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(4px)`;}else card.style.transform='';});});resizeAtmosphere();requestAnimationFrame(renderAtmosphere);
+    addEventListener('resize',resizeAtmosphere);addEventListener('pointermove',event=>{atmoMouse.x=event.clientX/aw;atmoMouse.y=event.clientY/ah;document.querySelectorAll('.glass-card:not([data-tilt-card])').forEach(card=>{const rect=card.getBoundingClientRect();if(event.clientX>=rect.left&&event.clientX<=rect.right&&event.clientY>=rect.top&&event.clientY<=rect.bottom){const rx=(event.clientY-(rect.top+rect.height/2))/rect.height*-3,ry=(event.clientX-(rect.left+rect.width/2))/rect.width*3;card.style.transform=`perspective(1100px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(4px)`;}else card.style.transform='';});});resizeAtmosphere();requestAnimationFrame(renderAtmosphere);
   </script>
 </body>
 </html>
