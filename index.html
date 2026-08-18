@@ -542,23 +542,54 @@
       card.addEventListener('pointerleave',()=>{activePointer=null;resetTilt();});
     });
 
-    /* Gesto vertical lúdico: rotación corta y elástica sin romper el carrusel horizontal */
+    /* Spin vertical con inercia: la fuerza del gesto decide cuántas vueltas da */
     document.querySelectorAll('[data-tilt-card]').forEach(card=>{
-      let gesture=null;
-      card.addEventListener('pointerdown',event=>{gesture={x:event.clientX,y:event.clientY,vertical:false};});
+      let gesture=null,spinAnimation=null;
+      const finishSpin=event=>{
+        if(!gesture)return;
+        const g=gesture,dy=event?.clientY-g.startY||g.lastY-g.startY,elapsed=Math.max(16,(event?.timeStamp||performance.now())-g.startTime),speed=Math.abs(g.velocity||dy/elapsed);
+        if(g.vertical){
+          const direction=dy<0?-1:1;
+          const turns=Math.max(.9,Math.min(8,Math.abs(dy)/150+speed*2.2));
+          const totalAngle=direction*turns*360;
+          const duration=Math.max(700,Math.min(2600,650+turns*230));
+          card.classList.add('vertical-flip-active');
+          spinAnimation?.cancel();
+          spinAnimation=card.animate([
+            {transform:card.style.transform||'perspective(1100px) rotateX(0deg) rotateY(0deg) translateZ(10px)',offset:0},
+            {transform:`perspective(1100px) rotateX(${direction*-7}deg) rotateY(${totalAngle*.48}deg) rotateZ(${direction*4}deg) translateY(${direction*-12}px) translateZ(22px)`,offset:.42},
+            {transform:`perspective(1100px) rotateX(0deg) rotateY(${totalAngle}deg) rotateZ(0deg) translateY(0) translateZ(0)`,offset:1}
+          ],{duration,easing:'cubic-bezier(.12,.72,.2,1)',fill:'forwards'});
+          spinAnimation.onfinish=()=>{card.style.transform='';card.classList.remove('vertical-flip-active');};
+        }
+        gesture=null;
+      };
+      card.addEventListener('pointerdown',event=>{spinAnimation?.cancel();gesture={startX:event.clientX,startY:event.clientY,lastY:event.clientY,lastTime:event.timeStamp||performance.now(),startTime:event.timeStamp||performance.now(),velocity:0,vertical:false};});
       card.addEventListener('pointermove',event=>{
         if(!gesture)return;
-        const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
-        if(!gesture.vertical && Math.abs(dy)>14 && Math.abs(dy)>Math.abs(dx)*1.15)gesture.vertical=true;
-        if(gesture.vertical){
-          const rotation=Math.max(-24,Math.min(24,dy*.22));
-          card.classList.add('vertical-flip-active');
-          card.style.transform=`perspective(1100px) rotateX(${dy*.035}deg) rotateY(${rotation}deg) rotateZ(${rotation*.08}deg) translateY(${Math.max(-10,Math.min(10,dy*.08))}px) translateZ(10px)`;
-        }
+        const dx=event.clientX-gesture.startX,dy=event.clientY-gesture.startY,now=event.timeStamp||performance.now(),dt=Math.max(8,now-gesture.lastTime);
+        gesture.velocity=(event.clientY-gesture.lastY)/dt;gesture.lastY=event.clientY;gesture.lastTime=now;
+        if(!gesture.vertical&&Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)*1.15)gesture.vertical=true;
+        if(gesture.vertical){const preview=Math.max(-34,Math.min(34,dy*.24));card.classList.add('vertical-flip-active');card.style.transform=`perspective(1100px) rotateX(${dy*.025}deg) rotateY(${preview}deg) rotateZ(${preview*.1}deg) translateY(${Math.max(-12,Math.min(12,dy*.08))}px) translateZ(12px)`;}
       });
-      const finishGesture=()=>{if(!gesture)return;if(gesture.vertical){card.animate([{transform:card.style.transform},{transform:'perspective(1100px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateY(0) translateZ(0)'}],{duration:520,easing:'cubic-bezier(.2,1.45,.35,1)'});setTimeout(()=>{card.style.transform='';card.classList.remove('vertical-flip-active');},500);}gesture=null;};
-      card.addEventListener('pointerup',finishGesture);card.addEventListener('pointercancel',finishGesture);card.addEventListener('pointerleave',finishGesture);
+      card.addEventListener('pointerup',finishSpin);card.addEventListener('pointercancel',finishSpin);card.addEventListener('pointerleave',event=>{if(gesture?.vertical)finishSpin(event);else gesture=null;});
     });
+
+    /* Restauración automática: solo la tarjeta enfocada conserva el movimiento */
+    const cardsViewport=document.getElementById('cards-container');
+    const allTiltCards=[...document.querySelectorAll('[data-tilt-card]')];
+    const resetCardVisual=card=>{card.getAnimations?.().forEach(animation=>animation.cancel());card.style.transform='';card.style.transition='';card.classList.remove('vertical-flip-active');card.removeAttribute('data-selected');};
+    let selectedCard=null,selectionFrame=null;
+    const syncSelectedCard=()=>{
+      if(!cardsViewport||!allTiltCards.length)return;
+      const viewportRect=cardsViewport.getBoundingClientRect(),center=viewportRect.left+viewportRect.width/2;
+      selectedCard=allTiltCards.reduce((best,card)=>{const rect=card.getBoundingClientRect();const distance=Math.abs(rect.left+rect.width/2-center);return !best||distance<best.distance?{card,distance}:best;},null)?.card||null;
+      allTiltCards.forEach(card=>{if(card===selectedCard)card.setAttribute('data-selected','true');else resetCardVisual(card);});
+    };
+    const queueSelectionSync=()=>{if(selectionFrame)return;selectionFrame=requestAnimationFrame(()=>{selectionFrame=null;syncSelectedCard();});};
+    cardsViewport?.addEventListener('scroll',queueSelectionSync,{passive:true});
+    addEventListener('resize',queueSelectionSync);
+    setTimeout(syncSelectedCard,80);
 
     /* Motor de atmósfera: profundidad, partículas y clima reactivo */
     const atmosphereCanvas=document.getElementById('weather-atmosphere');
