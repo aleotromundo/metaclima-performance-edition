@@ -117,12 +117,28 @@
     .briefing-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
     .briefing-script{display:none;margin-top:10px;padding:10px;border-radius:14px;background:rgba(15,23,42,.45);font-size:10px;line-height:1.5;color:rgba(241,245,249,.88);max-height:130px;overflow:auto}
     .briefing-script.visible{display:block}
+    /* Tarjetas uniformes sin alturas rígidas: el carrusel estira la fila y el contenido nunca se corta */
+    #cards-container{align-items:stretch}
+    #cards-container>[data-tilt-card]{box-sizing:border-box;width:350px!important;flex:0 0 350px;min-height:0;height:auto;overflow:visible}
+    @media(max-width:767px){#cards-container>[data-tilt-card]{width:85vw!important;flex-basis:85vw;min-height:0;height:auto;overflow:visible}}
     /* Orden temporal final: Ayer → Variables → Hoy → Próximas 12 Horas → Mañana */
     #cards-container #card-yesterday{order:1}
     #cards-container #card-left{order:2}
     #cards-container #card-center{order:3}
     #cards-container #card-right{order:4}
     #cards-container #card-tomorrow{order:5}
+    .live-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 auto 10px;width:min(1180px,96%);padding:7px 10px;border:1px solid rgba(125,211,252,.18);border-radius:14px;background:rgba(15,23,42,.34);backdrop-filter:blur(10px);color:rgba(226,232,240,.76);font-size:10px;letter-spacing:.04em}
+    .live-status .live-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 10px #34d399;animation:livePulse 1.8s ease-in-out infinite}
+    .live-status strong{color:#fde68a;font-weight:900}
+    .tv-toggle{border:1px solid rgba(125,211,252,.35);background:rgba(56,189,248,.12);color:#e0f2fe;border-radius:10px;padding:6px 9px;font-size:10px;font-weight:900;cursor:pointer;transition:transform .2s ease,background .2s ease}
+    .tv-toggle:hover{transform:translateY(-1px);background:rgba(56,189,248,.24)}
+    .tv-mode .tv-hide{opacity:0!important;pointer-events:none!important}
+    .tv-mode header{opacity:.35;transition:opacity .4s ease}
+    .tv-mode header:hover{opacity:1}
+    .tv-mode .live-status{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:50;width:auto;max-width:calc(100vw - 24px);margin:0;background:rgba(15,23,42,.62)}
+    .tv-mode main{padding-top:52px}
+    .tv-mode footer{opacity:.45}
+    @keyframes livePulse{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
     #floating-speaker{position:fixed;right:22px;bottom:58px;z-index:60;width:64px;height:64px;border-radius:24px;border:1px solid rgba(251,191,36,.65);background:linear-gradient(145deg,rgba(251,191,36,.88),rgba(14,165,233,.9));color:#0f172a;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 28px rgba(56,189,248,.28);cursor:pointer;animation:speakerFloat 3.6s ease-in-out infinite;transform-origin:center;transition:filter .2s ease,scale .2s ease}
     #floating-speaker:hover{filter:brightness(1.12);scale:1.08}
     #floating-speaker:active{scale:.92}
@@ -135,7 +151,20 @@
     @keyframes speakerPulse{from{box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 20px rgba(251,191,36,.5)}to{box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 42px rgba(56,189,248,.8)}}
     @keyframes labelBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
     @media(prefers-reduced-motion:reduce){#floating-speaker,#floating-speaker-label,#floating-speaker .speaker-ping{animation:none!important}}
-    @media(max-width:767px){.weather-map-shell{height:132px}.weather-modal-card{padding:10px;border-radius:22px}#expanded-map{height:58vh;min-height:280px}#weather-atmosphere-hud{left:12px;bottom:58px;font-size:8px}#floating-speaker{right:16px;bottom:86px}#floating-speaker-label{right:82px;bottom:106px;max-width:150px}footer{padding-bottom:18px!important}}
+    #brief-player{position:fixed;right:22px;bottom:132px;z-index:61;width:min(330px,calc(100vw - 28px));padding:12px;border:1px solid rgba(255,255,255,.25);border-radius:22px;background:linear-gradient(145deg,rgba(15,23,42,.92),rgba(30,41,59,.88));box-shadow:0 20px 60px rgba(0,0,0,.52),inset 0 0 28px rgba(56,189,248,.08);backdrop-filter:blur(18px);display:none;transform-origin:bottom right;animation:briefPlayerIn .28s ease-out}
+    #brief-player.open{display:block}
+    #brief-cover{height:92px;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative;background:linear-gradient(135deg,#0f172a,#075985 52%,#f59e0b);border:1px solid rgba(255,255,255,.22)}
+    #brief-cover:after{content:"";position:absolute;width:130px;height:130px;right:-25px;top:-42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);box-shadow:0 0 0 14px rgba(255,255,255,.06),0 0 0 28px rgba(255,255,255,.04)}
+    #brief-cover .cover-kicker{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(224,242,254,.8);position:relative;z-index:1}
+    #brief-cover .cover-title{font-size:20px;font-weight:950;letter-spacing:-.04em;position:relative;z-index:1}
+    #brief-cover .cover-meta{font-size:9px;color:rgba(255,255,255,.82);position:relative;z-index:1}
+    #brief-player-controls{display:flex;align-items:center;gap:8px;margin-top:10px}
+    #brief-player-controls button{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;border-radius:10px;padding:7px 9px;font-size:11px;cursor:pointer}
+    #brief-player-controls button.primary{background:linear-gradient(135deg,#fbbf24,#38bdf8);color:#0f172a;font-weight:900}
+    #brief-player-status{font-size:10px;line-height:1.3;color:rgba(226,232,240,.78);flex:1}
+    #brief-player audio{width:100%;height:28px;margin-top:9px;filter:saturate(.7)}
+    @keyframes briefPlayerIn{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    @media(max-width:767px){.weather-map-shell{height:132px}.weather-modal-card{padding:10px;border-radius:22px}#expanded-map{height:58vh;min-height:280px}.live-status{font-size:9px;gap:6px}.tv-mode .live-status{top:8px}.tv-mode main{padding-top:48px}#weather-atmosphere-hud{left:12px;bottom:58px;font-size:8px}#floating-speaker{right:16px;bottom:86px}#floating-speaker-label{right:82px;bottom:106px;max-width:150px}#brief-player{right:14px;bottom:158px;width:calc(100vw - 28px)}footer{padding-bottom:18px!important}}
   </style>
 </head>
 <body id="app-bg" class="bg-slate-950 text-white min-h-screen flex flex-col justify-between font-sans bg-weather relative overflow-x-hidden selection:bg-amber-400 selection:text-slate-900"
@@ -158,6 +187,7 @@
       <svg class="w-4 h-4 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       <span id="btn-text">Consultar Mi Ubicación</span>
     </button>
+    <button id="tv-toggle" class="tv-toggle tv-hide" type="button" onclick="toggleTvMode()" aria-pressed="false">▣ Modo TV</button>
   </header>
 
   <!-- Contenedor Principal / Dashboard -->
@@ -187,6 +217,7 @@
 
     <!-- Dashboard con Carrusel Deslizable -->
     <div id="dashboard" class="hidden w-full relative group">
+      <div id="live-status" class="live-status tv-hide"><span class="live-dot"></span><strong>EN VIVO</strong><span id="live-clock">--:--:--</span><span>·</span><span id="last-updated">Esperando actualización</span><button id="tv-mode-inline" class="tv-toggle" type="button" onclick="toggleTvMode()">▣ Modo TV</button></div>
 
       <!-- FLECHAS MÓVILES INTELIGENTES PARA NAVEGACIÓN -->
       <button id="arrow-left" onclick="scrollSlider(-1)" class="hidden md:hidden absolute left-1 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full glass-card items-center justify-center text-amber-300 hover:bg-white/30 transition-all opacity-90 active:scale-90 shadow-2xl border border-white/40">
@@ -197,7 +228,7 @@
       </button>
 
       <!-- TIRA DESLIZABLE DE 3 TARJETAS -->
-      <div id="cards-container" class="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory py-4 px-[7.5vw] md:px-0 md:justify-center scroll-smooth items-stretch">
+      <div id="cards-container" class="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory py-4 px-[7.5vw] md:px-0 justify-start scroll-smooth items-stretch">
 
         <!-- TARJETA TEMPORAL: AYER -->
         <div id="card-yesterday" data-tilt-card class="snap-center shrink-0 w-[85vw] sm:w-[320px] md:w-[340px] glass-card rounded-3xl p-5 flex flex-col justify-between border border-violet-300/25 temporal-card">
@@ -251,6 +282,11 @@
             <span>Ubicación GPS:</span>
             <span id="coords-text" class="font-mono text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-400/20">--</span>
           </div>
+          <div class="weather-map-shell variables-map-shell" data-expand-module="map" title="Tocar para ampliar mapa">
+            <div id="weather-map"></div>
+            <button class="map-expand-hit" type="button" onclick="abrirMapa(event)">⛶ AMPLIAR</button>
+            <span class="map-caption">Cielo local · GPS · Radar</span>
+          </div>
         </div>
 
         <!-- TARJETA 2: Consenso Promedio (Hero Épico) -->
@@ -298,8 +334,13 @@
               <span class="flex items-center gap-2 font-bold text-slate-100"><span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span> MET Norway</span>
               <span id="src-metnorway" class="font-mono font-bold text-rose-200">--</span>
             </div>
+            <div class="flex justify-between items-center text-xs p-2.5 rounded-xl glass-pill border border-violet-400/20">
+              <span class="flex items-center gap-2 font-bold text-slate-100"><span class="w-2.5 h-2.5 rounded-full bg-violet-400"></span> NOAA / NWS</span>
+              <span id="src-noaa" class="font-mono font-bold text-violet-200">Solo EE.UU.</span>
+            </div>
+            <div id="source-status" class="text-[10px] text-slate-300/80 pt-1">Consenso esperando ubicación…</div>
           </div>
-          <div class="briefing-module relative z-10" id="briefing-module">
+          <div class="briefing-module relative z-10 hidden" id="briefing-module">
             <div class="detail-kicker">MetaClima Daily Brief</div>
             <div id="briefing-status" class="briefing-status mt-1">Consultá tu ubicación para generar el informe hablado.</div>
             <div class="flex gap-2 mt-2">
@@ -354,11 +395,6 @@
             <div class="detail-main"><span id="wind-direction-icon" class="text-3xl">↗</span><span id="wind-detail" class="detail-value">-- km/h</span></div>
             <div id="wind-detail-sub" class="detail-sub">Tocar para ver viento, visibilidad, lluvia y presión.</div>
           </div>
-          <div class="weather-map-shell" data-expand-module="map" title="Tocar para ampliar mapa">
-            <div id="weather-map"></div>
-            <button class="map-expand-hit" type="button" onclick="abrirMapa(event)">⛶ AMPLIAR</button>
-            <span class="map-caption">Cielo local · GPS · Radar</span>
-          </div>
           <div class="mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-[11px] font-semibold text-slate-300">
             <span>Bloque continuo</span>
             <span class="text-amber-300 font-bold">12 Horas Siguientes</span>
@@ -388,16 +424,28 @@
     </div>
   </div>
 
+  <div id="brief-player" aria-live="polite">
+    <div id="brief-cover"><div class="cover-kicker">MetaClima · Informe local</div><div id="brief-cover-title" class="cover-title">Clima de tu barrio</div><div id="brief-cover-meta" class="cover-meta">Esperando ubicación · una narradora</div></div>
+    <div id="brief-player-controls"><button class="primary" type="button" onclick="generarPodcast()">▶ Escuchar</button><div id="brief-player-status">Tocá el parlante para abrir el informe.</div><button type="button" aria-label="Cerrar reproductor" onclick="toggleBriefPlayer(false)">×</button></div>
+    <audio id="brief-player-audio" controls preload="none"></audio>
+  </div>
   <div id="floating-speaker-label">Tocame y te cuento el clima</div>
-  <button id="floating-speaker" type="button" aria-label="Escuchar podcast meteorológico" onclick="generarPodcast()"><span class="speaker-ping"></span><span class="speaker-icon">🔊</span></button>
+  <button id="floating-speaker" type="button" aria-label="Abrir reproductor meteorológico" onclick="toggleBriefPlayer()"><span class="speaker-ping"></span><span class="speaker-icon">🔊</span></button>
 
   <footer class="w-full p-4 text-center text-xs font-medium text-slate-300 z-10">
     <p>MetaClima — Consenso meteorológico optimizado</p>
   </footer>
 
   <script>
-    let weatherMap=null,expandedMap=null,mapMarker=null,expandedMarker=null,mapCircle=null,expandedCircle=null,radarLayer=null,expandedRadarLayer=null;
+    let weatherMap=null,expandedMap=null,mapMarker=null,expandedMarker=null,mapCircle=null,expandedCircle=null,cloudLayer=null,expandedCloudLayer=null,radarLayer=null,expandedRadarLayer=null;
     let currentCoords={lat:null,lon:null}, temporalData={};
+    let liveRefreshTimer=null, clockTimer=null, lastUpdatedAt=null, tvMode=localStorage.getItem('metaclima_tv_mode')==='1';
+
+    // Solo se usa la clave anon de Supabase, diseñada para el navegador. Nunca colocar aquí service_role ni claves TTS.
+    const SUPABASE_URL='https://orgaltiwyywxpjmderzq.supabase.co';
+    const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yZ2FsdGl3eXl3eHBqbWRlcnpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwMTkxMzcsImV4cCI6MjEwMjU5NTEzN30.6oCAMqRYEHKQa0SbCaEWosFdWX7wCG9q6ScjGGDWIAc';
+    const SUPABASE_BRIEF_VIEW=`${SUPABASE_URL}/rest/v1/current_weather_brief`;
+
     const weatherLabel=code=>{if(code==null)return 'Sin datos';if(code>=95)return 'Tormenta';if(code>=80)return 'Lluvias fuertes';if(code>=61)return 'Lluvia';if(code>=51)return 'Llovizna';if(code>=45)return 'Nublado';if(code>=3)return 'Parcialmente nublado';if(code>=1)return 'Despejado con nubes';return 'Despejado';};
     const weatherIcon=code=>{if(code==null)return '·';if(code>=95)return '⛈️';if(code>=80)return '🌧️';if(code>=61)return '🌦️';if(code>=51)return '🌫️';if(code>=45)return '☁️';if(code>=3)return '⛅';if(code>=1)return '🌤️';return '☀️';};
     const prettyDate=date=>new Intl.DateTimeFormat('es-AR',{weekday:'long',day:'numeric',month:'short'}).format(new Date(`${date}T12:00:00`));
@@ -414,8 +462,8 @@
       if(!weatherMap||!expandedMap)return;
       try{const response=await fetch('https://api.rainviewer.com/public/weather-maps.json');const data=await response.json();const frame=data.radar?.past?.at(-1);if(!frame)return;const url=`${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_0.png`;radarLayer?.remove();expandedRadarLayer?.remove();radarLayer=L.tileLayer(url,{opacity:.42,maxNativeZoom:7,maxZoom:18,zIndex:300}).addTo(weatherMap);expandedRadarLayer=L.tileLayer(url,{opacity:.5,maxNativeZoom:7,maxZoom:18,zIndex:300}).addTo(expandedMap);}catch(error){console.info('Radar no disponible; se mantiene mapa base.');}
     }
-    function updateWeatherMaps(lat,lon,temp,pop,wind){
-      if(!weatherMap||!expandedMap||lat==null||lon==null)return;const center=[lat,lon];weatherMap.setView(center,10,{animate:true});expandedMap.setView(center,10,{animate:false});const popup=`<strong>MetaClima · Hoy</strong><br>${Math.round(temp)}°C · ${pop}% lluvia<br>${wind} km/h de viento`;mapMarker?.remove();expandedMarker?.remove();mapCircle?.remove();expandedCircle?.remove();mapMarker=L.circleMarker(center,{radius:8,color:'#fbbf24',weight:3,fillColor:'#38bdf8',fillOpacity:.9}).addTo(weatherMap);expandedMarker=L.circleMarker(center,{radius:10,color:'#fbbf24',weight:3,fillColor:'#38bdf8',fillOpacity:.9}).addTo(expandedMap).bindPopup(popup).openPopup();mapCircle=L.circle(center,{radius:Math.max(900,Math.min(7000,wind*120+900)),color:'#38bdf8',weight:1,fillColor:'#38bdf8',fillOpacity:.08}).addTo(weatherMap);expandedCircle=L.circle(center,{radius:Math.max(900,Math.min(7000,wind*120+900)),color:'#38bdf8',weight:1,fillColor:'#38bdf8',fillOpacity:.08}).addTo(expandedMap);addRadarLayer();
+    function updateWeatherMaps(lat,lon,temp,pop,wind,cloud=0){
+      if(!weatherMap||!expandedMap||lat==null||lon==null)return;const center=[lat,lon];weatherMap.setView(center,10,{animate:true});expandedMap.setView(center,10,{animate:false});const cloudValue=Math.max(0,Math.min(100,Number(cloud)||0));const popup=`<strong>MetaClima · Hoy</strong><br>${Math.round(temp)}°C · ${pop}% lluvia<br>${wind} km/h de viento<br>${cloudValue}% nubosidad`;mapMarker?.remove();expandedMarker?.remove();mapCircle?.remove();expandedCircle?.remove();cloudLayer?.remove();expandedCloudLayer?.remove();mapMarker=L.circleMarker(center,{radius:8,color:'#fbbf24',weight:3,fillColor:'#38bdf8',fillOpacity:.95}).addTo(weatherMap);expandedMarker=L.circleMarker(center,{radius:10,color:'#fbbf24',weight:3,fillColor:'#38bdf8',fillOpacity:.95}).addTo(expandedMap).bindPopup(popup).openPopup();mapCircle=L.circle(center,{radius:Math.max(900,Math.min(7000,wind*120+900)),color:'#38bdf8',weight:1,fillColor:'#38bdf8',fillOpacity:.1}).addTo(weatherMap);expandedCircle=L.circle(center,{radius:Math.max(900,Math.min(7000,wind*120+900)),color:'#38bdf8',weight:1,fillColor:'#38bdf8',fillOpacity:.1}).addTo(expandedMap);const cloudStyle={radius:Math.max(1800,Math.min(9000,2800+cloudValue*45)),color:'#cbd5e1',weight:1,opacity:.28+cloudValue/400,fillColor:'#94a3b8',fillOpacity:.04+cloudValue/260};cloudLayer=L.circle(center,cloudStyle).addTo(weatherMap).bindTooltip(`Nubosidad local: ${cloudValue}%`,{permanent:false});expandedCloudLayer=L.circle(center,cloudStyle).addTo(expandedMap);addRadarLayer();
     }
     function renderTemporalCards(om,historical){
       const d=om.daily;const h=historical?.daily;if(!d?.time||d.time.length<2)return;const yesterday={date:h?.time?.[0]||new Date(Date.now()-86400000).toISOString().slice(0,10),max:h?.temperature_2m_max?.[0]??null,min:h?.temperature_2m_min?.[0]??null,rain:h?.precipitation_sum?.[0]??null,wind:h?.wind_speed_10m_max?.[0]??null,code:h?.weather_code?.[0]??null,pop:null};const tomorrow={date:d.time[1],max:d.temperature_2m_max[1],min:d.temperature_2m_min[1],rain:d.precipitation_sum[1],wind:d.wind_speed_10m_max[1],code:d.weather_code[1],pop:d.precipitation_probability_max?.[1]??null};temporalData={yesterday,tomorrow};
@@ -430,22 +478,30 @@
     document.addEventListener('keydown',event=>{if(event.key==='Escape')cerrarModal();});document.getElementById('weather-modal')?.addEventListener('click',event=>{if(event.target.id==='weather-modal')cerrarModal();});
     let briefingUtterance=null,podcastQueue=[],podcastIndex=0,podcastPlaying=false;
     function briefingLocation(){return document.getElementById('location-name')?.textContent?.replace(/^⌖ /,'')||'tu ubicación';}
-    function buildLocalPodcast(){const current=latestWeather||{};const y=temporalData.yesterday||{};const t=temporalData.tomorrow||{};const temp=Math.round(current.temp??0),pop=current.pop??0,wind=current.wind??0,city=briefingLocation();const outlook=pop>60?'inestable, con lluvias probables':pop>30?'variable, con posibilidad de precipitaciones':'relativamente estable';return [{host:'A',text:`Buenos días. Esto es MetaClima Daily Brief para ${city}. Arrancamos con ${temp} grados, una probabilidad de lluvia del ${pop} por ciento y viento de ${wind} kilómetros por hora.`},{host:'B',text:`¿Y cómo se presenta la jornada? ¿Tenemos un día tranquilo o conviene estar atentos?`},{host:'A',text:`La lectura combinada de las fuentes indica un escenario ${outlook}. Durante las próximas horas conviene mirar especialmente la evolución de la precipitación y el viento, porque son las variables que pueden cambiar más rápido la sensación del día.`},{host:'B',text:`Vamos a compararlo con ayer. ¿Qué diferencia importante aparece en los datos históricos?`},{host:'A',text:y.max!=null?`Ayer tuvimos una máxima de ${Math.round(y.max)} grados, una mínima de ${Math.round(y.min)} y ${Number(y.rain||0).toFixed(1)} milímetros de precipitación. Esa referencia ayuda a entender el cambio real, no solo la sensación.`:'El histórico de ayer todavía no está disponible para una comparación completa.'},{host:'B',text:`Y mirando hacia adelante, ¿qué nos dice el pronóstico para mañana?`},{host:'A',text:t.max!=null?`Mañana se esperan ${Math.round(t.max)} grados de máxima y ${Math.round(t.min)} de mínima, con una probabilidad de lluvia del ${t.pop==null?'dato no disponible':Math.round(t.pop)+' por ciento'}.`:'El pronóstico de mañana todavía no está disponible.'},{host:'B',text:`Entonces, antes de salir, la mejor estrategia es revisar el mapa, las próximas doce horas y volver a consultar si cambia el cielo.`},{host:'A',text:`Exactamente. Este fue el informe Daily Brief de MetaClima. Datos reales, dos fuentes meteorológicas y una lectura simple para tu día. Nos volvemos a encontrar en la próxima actualización.`}];}
-    function dailyBriefKey(){const day=new Date().toISOString().slice(0,10);const coord=currentCoords?.lat!=null?`${currentCoords.lat.toFixed(2)}_${currentCoords.lon.toFixed(2)}`:'unknown';return `metaclima_daily_brief_${day}_${coord}`;}
+    function toggleBriefPlayer(force){const panel=document.getElementById('brief-player');if(!panel)return;const open=force===undefined?!panel.classList.contains('open'):force;panel.classList.toggle('open',open);if(open)updateBriefCover();}
+    function updateBriefCover(mode){const time=briefingTimeContext(),cover=document.getElementById('brief-cover'),title=document.getElementById('brief-cover-title'),meta=document.getElementById('brief-cover-meta');if(!cover||!title||!meta)return;const cloud=Number(latestWeather?.current?.cloud_cover||0),pop=Number(latestWeather?.pop||0);const weatherMode=pop>60?'rain':cloud>65?'cloud':'clear';const labels={morning:'Informe de la mañana',afternoon:'Informe de la tarde',evening:'Informe de la noche','late-night':'Informe de madrugada'};const themes={rain:'linear-gradient(135deg,#0f172a,#075985 52%,#38bdf8)',cloud:'linear-gradient(135deg,#1e293b,#475569 52%,#94a3b8)',clear:'linear-gradient(135deg,#172554,#0369a1 52%,#f59e0b)'};cover.style.background=themes[weatherMode];title.textContent=labels[time.key]||'Clima de tu barrio';meta.textContent=`${briefingLocation()} · una narradora · ${weatherMode==='rain'?'lluvia':weatherMode==='cloud'?'nubosidad':'cielo abierto'}`;}
+    function setBriefPlayerStatus(text){const el=document.getElementById('brief-player-status');if(el)el.textContent=text;}
+    function briefingTimeContext(){const hour=new Date().getHours();if(hour>=5&&hour<12)return{key:'morning',greeting:'Buen día, vecino',window:'esta mañana',next:'más tarde',close:'Que tengas un buen día.'};if(hour>=12&&hour<19)return{key:'afternoon',greeting:'Buenas tardes, vecino',window:'esta tarde',next:'hacia la noche',close:'Que tengas una buena tarde.'};if(hour>=19||hour<2)return{key:'evening',greeting:'Buenas noches, vecino',window:'esta noche',next:'mañana temprano',close:'Que descanses.'};return{key:'late-night',greeting:'Todavía queda noche por delante, vecino',window:'durante la madrugada',next:'cuando empiece el día',close:'Que descanses y abrigate si salís.'};}
+    function buildLocalPodcast(){const current=latestWeather||{};const y=temporalData.yesterday||{};const t=temporalData.tomorrow||{};const time=briefingTimeContext(),temp=Math.round(current.temp??0),pop=current.pop??0,wind=Math.round(current.wind??0),city=briefingLocation();const outlook=pop>60?'movido, con lluvias bastante probables':pop>30?'cambiante, así que conviene mirar el cielo':'bastante tranquilo por ahora';const place=city&&city!=='tu ubicación'?` por ${city}`:'';const tomorrow=t.max!=null?`Mañana se esperan ${Math.round(t.max)} grados de máxima y ${Math.round(t.min)} de mínima, con una probabilidad de lluvia del ${t.pop==null?'dato todavía incierto':Math.round(t.pop)+' por ciento'}.`:'Mañana todavía necesita una nueva mirada para confirmarlo.';return [{host:'A',text:`${time.greeting}. Por${place}, ${time.window} tenemos ${temp} grados, ${outlook} y un viento de ${wind} kilómetros por hora.`},{host:'A',text:`Si vas a salir, yo tendría en cuenta la lluvia y el viento. Son las dos cosas que pueden cambiar más rápido ${time.window}; el cielo te va a ir avisando, pero no esperes hasta último momento.`},{host:'A',text:y.max!=null?`Ayer el barrio llegó a ${Math.round(y.max)} grados, bajó hasta ${Math.round(y.min)} y recibió ${Number(y.rain||0).toFixed(1)} milímetros. Hoy la sensación cambia ${pop>30?'un poco más rápido':'de manera bastante tranquila'}.`:`La comparación con ayer todavía necesita una nueva lectura, pero ahora miraría especialmente la nubosidad y el viento.`},{host:'A',text:`${tomorrow} ${time.next} volvemos a mirar cómo se mueve el cielo.`},{host:'A',text:`En resumen: no te confíes de una sola hora, mirá el cielo antes de salir y escuchá cómo cambia el barrio. ${time.close}`}];}
+    function dailyBriefLocationKey(){return currentCoords?.lat!=null?`${currentCoords.lat.toFixed(2)}_${currentCoords.lon.toFixed(2)}`:'unknown';}
+    function dailyBriefKey(){const day=new Date().toISOString().slice(0,10);return `metaclima_daily_brief_${day}_${dailyBriefLocationKey()}`;}
     function readDailyBrief(){try{const cached=JSON.parse(localStorage.getItem(dailyBriefKey())||'null');return cached?.dialogue?.length?cached:null;}catch(error){return null;}}
+    function publicBriefAudioUrl(audioPath){if(!audioPath)return null;if(/^https?:\/\//i.test(audioPath))return audioPath;return `${SUPABASE_URL}/storage/v1/object/public/weather-briefs/${String(audioPath).replace(/^\/+/, '')}`;}
+    async function loadSupabaseCurrentBrief(){if(!currentCoords?.lat)return null;try{const params=new URLSearchParams({select:'*',location_key:`eq.${dailyBriefLocationKey()}`,order:'generated_at.desc',limit:'1'});const response=await fetch(`${SUPABASE_BRIEF_VIEW}?${params.toString()}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});if(!response.ok)return null;const rows=await response.json();const row=rows?.[0];if(!row?.dialogue?.length)return null;const result={dialogue:row.dialogue,audioUrl:publicBriefAudioUrl(row.audio_path),weatherSnapshot:row.weather_snapshot,createdAt:row.generated_at,stale:row.expires_at?new Date(row.expires_at).getTime()<Date.now():false};saveDailyBrief(result.dialogue,result.audioUrl,result.weatherSnapshot||latestWeather);return result;}catch(error){console.info('Brief persistido no disponible.');return null;}}
     function saveDailyBrief(dialogue,audioUrl=null,weatherSnapshot=latestWeather){try{localStorage.setItem(dailyBriefKey(),JSON.stringify({createdAt:new Date().toISOString(),dialogue,audioUrl,weatherSnapshot,stale:false}));}catch(error){console.info('Caché local no disponible.');}}
     function markDailyBriefStale(){try{const cached=readDailyBrief();if(cached){cached.stale=true;cached.staleAt=new Date().toISOString();localStorage.setItem(dailyBriefKey(),JSON.stringify(cached));}}catch(error){}}
     function forecastChangedEnough(previous,next){if(!previous||!next)return false;const tempDelta=Math.abs(Number(previous.temp||0)-Number(next.temp||0));const popDelta=Math.abs(Number(previous.pop||0)-Number(next.pop||0));const windDelta=Math.abs(Number(previous.wind||0)-Number(next.wind||0));const oldCode=previous.current?.weather_code??previous.code;const newCode=next.current?.weather_code??next.code;return tempDelta>=2||popDelta>=25||windDelta>=10||(oldCode!=null&&newCode!=null&&String(oldCode)!==String(newCode));}
     let briefRefreshTimer=null;
     async function verificarActualizacionBrief(){if(!currentCoords?.lat||!latestWeather)return;try{const fresh=await fetchOpenMeteo(currentCoords.lat,currentCoords.lon);const freshCurrent={current:fresh.current,temp:Number(fresh.current.temperature_2m),pop:Number(fresh.hourly?.precipitation_probability?.[0]||0),wind:Number(fresh.current.wind_speed_10m||0)};const cached=readDailyBrief();if(cached&&!cached.stale&&forecastChangedEnough(cached.weatherSnapshot,freshCurrent)){markDailyBriefStale();const status=document.getElementById('briefing-status');if(status)status.textContent='Hay una actualización meteorológica importante. Tocá el parlante para regenerar el podcast.';}}catch(error){console.info('Actualización silenciosa no disponible.');}}
     function iniciarVerificacionBrief(){clearInterval(briefRefreshTimer);briefRefreshTimer=setInterval(verificarActualizacionBrief,90*60*1000);setTimeout(verificarActualizacionBrief,15000);}
-    async function requestPodcastDialogue(){const cached=readDailyBrief();if(cached&&!cached.stale)return cached;const payload={location:briefingLocation(),weather:latestWeather,temporal:temporalData};if(window.METACLIMA_BRIEF_ENDPOINT){const response=await fetch(window.METACLIMA_BRIEF_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok)throw new Error('Brief endpoint '+response.status);const data=await response.json();if(Array.isArray(data.dialogue)){const result={dialogue:data.dialogue,audioUrl:data.audioUrl||null};saveDailyBrief(result.dialogue,result.audioUrl,latestWeather);return result;}}const result={dialogue:buildLocalPodcast(),audioUrl:null};saveDailyBrief(result.dialogue,null,latestWeather);return result;}
-    function chooseSpanishVoices(){const voices=(window.speechSynthesis?.getVoices?.()||[]).filter(v=>/^es(-|_)/i.test(v.lang));return [voices[0]||null,voices.find(v=>v!==voices[0])||voices[0]||null];}
-    function speakNextPodcastSegment(){if(!podcastPlaying||podcastIndex>=podcastQueue.length){podcastPlaying=false;document.getElementById('floating-speaker')?.classList.remove('playing');document.getElementById('briefing-status').textContent='Podcast terminado. Tocá el parlante para escucharlo otra vez.';return;}const segment=podcastQueue[podcastIndex++],voices=chooseSpanishVoices();briefingUtterance=new SpeechSynthesisUtterance(segment.text);briefingUtterance.lang='es-AR';briefingUtterance.rate=segment.host==='A'?.93:.98;briefingUtterance.pitch=segment.host==='A'?.92:1.08;briefingUtterance.voice=segment.host==='A'?voices[0]:voices[1];document.getElementById('briefing-status').textContent=`Podcast en curso · Host ${segment.host==='A'?'meteorólogo':'co-conductora'}`;briefingUtterance.onend=speakNextPodcastSegment;briefingUtterance.onerror=()=>{podcastPlaying=false;document.getElementById('briefing-status').textContent='La voz no pudo reproducirse en este navegador.';document.getElementById('floating-speaker')?.classList.remove('playing');};window.speechSynthesis.speak(briefingUtterance);}
-    async function generarPodcast(){if(!latestWeather){document.getElementById('briefing-status').textContent='Primero consultá tu ubicación para activar el podcast.';return;}detenerBriefing();const status=document.getElementById('briefing-status'),scriptBox=document.getElementById('briefing-script'),cached=readDailyBrief();status.textContent=cached?'Cargando informe guardado de hoy…':'Generando el podcast diario…';try{const result=await requestPodcastDialogue();podcastQueue=result.dialogue||result;podcastIndex=0;scriptBox.textContent=podcastQueue.map(item=>`${item.host==='A'?'METEORÓLOGO':'CO-CONDUCTORA'}: ${item.text}`).join('\\n\\n');scriptBox.classList.add('visible');if(result.audioUrl){const audio=document.getElementById('briefing-audio');audio.src=result.audioUrl;audio.classList.remove('hidden');await audio.play();status.textContent='Reproduciendo informe guardado de hoy.';return;}podcastPlaying=true;document.getElementById('floating-speaker')?.classList.add('playing');speakNextPodcastSegment();}catch(error){console.error(error);status.textContent='No se pudo preparar el podcast. Los datos del dashboard siguen disponibles.';}}
+    async function requestPodcastDialogue(){const cached=readDailyBrief();if(cached&&!cached.stale)return cached;const persisted=await loadSupabaseCurrentBrief();if(persisted&&!persisted.stale)return persisted;const payload={location:briefingLocation(),locationKey:dailyBriefLocationKey(),weather:latestWeather,temporal:temporalData};if(window.METACLIMA_BRIEF_ENDPOINT){const response=await fetch(window.METACLIMA_BRIEF_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok)throw new Error('Brief endpoint '+response.status);const data=await response.json();if(Array.isArray(data.dialogue)){const result={dialogue:data.dialogue,audioUrl:data.audioUrl||null};saveDailyBrief(result.dialogue,result.audioUrl,latestWeather);return result;}}const result={dialogue:buildLocalPodcast(),audioUrl:null};saveDailyBrief(result.dialogue,null,latestWeather);return result;}
+    function chooseSpanishVoices(){const voices=(window.speechSynthesis?.getVoices?.()||[]).filter(v=>/^es(-|_)/i.test(v.lang));const score=v=>{const name=`${v.name} ${v.lang}`.toLowerCase();return (/(natural|online|neural|google)/.test(name)?100:0)+(/es[-_]ar/.test(name)?35:0)+(/es[-_]419|es[-_]mx/.test(name)?25:0)+(/female|femenina|mujer/.test(name)?5:0);};return [voices.sort((a,b)=>score(b)-score(a))[0]||null];}
+    function speakNextPodcastSegment(){if(!podcastPlaying||podcastIndex>=podcastQueue.length){podcastPlaying=false;document.getElementById('floating-speaker')?.classList.remove('playing');document.getElementById('briefing-status').textContent='Informe terminado. Tocá el parlante para escucharlo otra vez.';setBriefPlayerStatus('Informe terminado.');return;}const segment=podcastQueue[podcastIndex++],voices=chooseSpanishVoices();briefingUtterance=new SpeechSynthesisUtterance(segment.text);briefingUtterance.lang='es-AR';briefingUtterance.rate=.94;briefingUtterance.pitch=.96;briefingUtterance.voice=voices[0]||null;document.getElementById('briefing-status').textContent='Informe meteorológico en curso';setBriefPlayerStatus('Reproduciendo narración local…');briefingUtterance.onend=speakNextPodcastSegment;briefingUtterance.onerror=()=>{podcastPlaying=false;document.getElementById('briefing-status').textContent='La voz no pudo reproducirse en este navegador.';setBriefPlayerStatus('La voz local no está disponible en este dispositivo.');document.getElementById('floating-speaker')?.classList.remove('playing');};window.speechSynthesis.speak(briefingUtterance);}
+    async function generarPodcast(){toggleBriefPlayer(true);if(!latestWeather){const status=document.getElementById('briefing-status');if(status)status.textContent='Primero consultá tu ubicación para activar el podcast.';setBriefPlayerStatus('Primero consultá tu ubicación.');return;}detenerBriefing();updateBriefCover();const status=document.getElementById('briefing-status'),scriptBox=document.getElementById('briefing-script'),cached=readDailyBrief();if(status)status.textContent=cached?'Cargando informe guardado de hoy…':'Buscando el informe del barrio…';try{const result=await requestPodcastDialogue();podcastQueue=result.dialogue||result;podcastIndex=0;if(scriptBox){scriptBox.textContent=podcastQueue.map(item=>`NARRADORA: ${item.text}`).join('\\n\\n');scriptBox.classList.add('visible');}if(result.audioUrl){const audio=document.getElementById('briefing-audio'),playerAudio=document.getElementById('brief-player-audio');audio.src=result.audioUrl;if(playerAudio){playerAudio.src=result.audioUrl;playerAudio.classList.remove('hidden');playerAudio.onplay=()=>{document.getElementById('floating-speaker')?.classList.add('playing');setBriefPlayerStatus('Reproduciendo audio guardado.');};playerAudio.onpause=()=>document.getElementById('floating-speaker')?.classList.remove('playing');playerAudio.onerror=()=>{playerAudio.removeAttribute('src');setBriefPlayerStatus('El audio guardado no está disponible; usando narración local.');podcastPlaying=true;speakNextPodcastSegment();};}audio.classList.remove('hidden');audio.onerror=()=>{audio.classList.add('hidden');podcastPlaying=true;setBriefPlayerStatus('Audio guardado no disponible; usando narración local.');speakNextPodcastSegment();};try{await audio.play();if(playerAudio)await playerAudio.play().catch(()=>{});if(status)status.textContent='Reproduciendo el informe meteorológico guardado.';setBriefPlayerStatus('Reproduciendo audio guardado.');return;}catch(error){audio.classList.add('hidden');if(playerAudio)playerAudio.removeAttribute('src');}}
+podcastPlaying=true;document.getElementById('floating-speaker')?.classList.add('playing');speakNextPodcastSegment();}catch(error){console.error(error);if(status)status.textContent='No se pudo preparar el podcast. Los datos del dashboard siguen disponibles.';}}
     function generarBriefing(){return generarPodcast();}
-    function detenerBriefing(){if(window.speechSynthesis)window.speechSynthesis.cancel();const audio=document.getElementById('briefing-audio');if(audio){audio.pause();audio.currentTime=0;}podcastPlaying=false;document.getElementById('floating-speaker')?.classList.remove('playing');const button=document.getElementById('briefing-play');if(button)button.disabled=!latestWeather;}
-    function habilitarBriefing(){const button=document.getElementById('briefing-play'),status=document.getElementById('briefing-status');if(button)button.disabled=false;const cached=readDailyBrief();if(status)status.textContent=cached?.stale?'Hay una actualización importante lista para regenerar. Tocá el parlante.':cached?'Podcast de hoy guardado. Tocá el parlante para escucharlo.':'Podcast diario listo para generar al tocar el parlante.';iniciarVerificacionBrief();}
+    function detenerBriefing(){if(window.speechSynthesis)window.speechSynthesis.cancel();['briefing-audio','brief-player-audio'].forEach(id=>{const audio=document.getElementById(id);if(audio){audio.pause();audio.currentTime=0;}});podcastPlaying=false;document.getElementById('floating-speaker')?.classList.remove('playing');setBriefPlayerStatus('Listo para escuchar el informe.');const button=document.getElementById('briefing-play');if(button)button.disabled=!latestWeather;}
+    function habilitarBriefing(){const button=document.getElementById('briefing-play'),status=document.getElementById('briefing-status');if(button)button.disabled=false;updateBriefCover();const cached=readDailyBrief(),time=briefingTimeContext();if(status)status.textContent=cached?.stale?`Hay una actualización importante para ${time.window}. Tocá el parlante.`:cached?`Informe de ${time.key==='morning'?'la mañana':time.key==='afternoon'?'la tarde':time.key==='evening'?'la noche':'la madrugada'} guardado. Tocá el parlante.`:`Informe breve de ${time.key==='morning'?'la mañana':time.key==='afternoon'?'la tarde':time.key==='evening'?'la noche':'la madrugada'} listo.`;iniciarVerificacionBrief();}
 
     function abrirDetalleBloque(element){const grid=document.getElementById('conditions-detail-grid');const text=element.innerText.trim().split(/\n/).filter(Boolean);grid.innerHTML=`<div class="col-span-full text-sm font-black text-amber-200 mb-1">Detalle meteorológico</div><div class="glass-pill rounded-2xl p-4 col-span-full"><div class="text-xs uppercase tracking-wider text-sky-200">${text[0]||'Variable'}</div><div class="text-2xl font-black text-white mt-2">${text.slice(1).join(' · ')||'Información disponible'}</div><div class="text-xs text-slate-300 mt-3">Dato consultado dentro del consenso actual de MetaClima.</div></div>`;document.getElementById('modal-map-view').classList.add('hidden');document.getElementById('modal-conditions-view').classList.remove('hidden');document.getElementById('weather-modal').classList.add('open');}
     document.querySelectorAll('#card-left .glass-pill,#card-center .glass-pill,#card-right .glass-pill,#card-yesterday .glass-pill,#card-tomorrow .glass-pill').forEach(block=>{block.setAttribute('role','button');block.setAttribute('tabindex','0');block.addEventListener('click',()=>abrirDetalleBloque(block));block.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirDetalleBloque(block);}});});
@@ -460,9 +516,17 @@
     async function cargarClimaDesdeCoordenadas(lat,lon,isRestored=false){
       const intro=document.getElementById('intro-screen'),loading=document.getElementById('loading-screen'),dashboard=document.getElementById('dashboard'),btnText=document.getElementById('btn-text');
       intro.classList.add('hidden');dashboard.classList.add('hidden');loading.classList.remove('hidden');btnText.textContent=isRestored?'Actualizando ubicación guardada…':'Actualizando…';currentCoords={lat,lon};storeLocation(lat,lon);actualizarFondoPorUbicacion(lat,lon);document.getElementById('coords-text').textContent=`${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
-      try{const [openMeteo,metNorway,historical]=await Promise.all([fetchOpenMeteo(lat,lon),fetchMetNorway(lat,lon).catch(()=>null),fetchHistoricalYesterday(lat,lon).catch(()=>null)]);renderDatos(openMeteo,metNorway,historical);loading.classList.add('hidden');dashboard.classList.remove('hidden');btnText.textContent='Actualizar Clima';const container=document.getElementById('cards-container');if(!container.dataset.scrollReady){container.addEventListener('scroll',updateArrowVisibility,{passive:true});container.dataset.scrollReady='1';}if(window.innerWidth<768)setTimeout(()=>{document.getElementById('card-center')?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});updateArrowVisibility();},150);}catch(err){console.error(err);loading.classList.add('hidden');if(isRestored){dashboard.classList.remove('hidden');btnText.textContent='Reintentar actualización';}else{intro.classList.remove('hidden');btnText.textContent='Reintentar';}}}
+      try{const [openMeteo,metNorway,historical,nws]=await Promise.all([fetchOpenMeteo(lat,lon),fetchMetNorway(lat,lon).catch(()=>null),fetchHistoricalYesterday(lat,lon).catch(()=>null),fetchNws(lat,lon)]);renderDatos(openMeteo,metNorway,historical,nws);lastUpdatedAt=Date.now();updateLiveClock();iniciarActualizacionEnVivo();loading.classList.add('hidden');dashboard.classList.remove('hidden');btnText.textContent='Actualizar Clima';const container=document.getElementById('cards-container');if(!container.dataset.scrollReady){container.addEventListener('scroll',updateArrowVisibility,{passive:true});container.dataset.scrollReady='1';}setTimeout(()=>{centerTodayCard('instant');updateArrowVisibility();queueSelectionSync();},150);}catch(err){console.error(err);loading.classList.add('hidden');if(isRestored){dashboard.classList.remove('hidden');btnText.textContent='Reintentar actualización';}else{intro.classList.remove('hidden');btnText.textContent='Reintentar';}}}
     async function obtenerClima(){if(!navigator.geolocation){alert('La geolocalización no está soportada por tu navegador.');return;}const permission=await readLocationPermission();const stored=readStoredLocation();if(permission==='granted'&&stored){cargarClimaDesdeCoordenadas(stored.lat,stored.lon,true);return;}const intro=document.getElementById('intro-screen'),loading=document.getElementById('loading-screen');intro.classList.add('hidden');loading.classList.remove('hidden');document.getElementById('btn-text').textContent='Solicitando ubicación…';navigator.geolocation.getCurrentPosition(pos=>{locationPermissionState='granted';storeLocation(pos.coords.latitude,pos.coords.longitude);cargarClimaDesdeCoordenadas(pos.coords.latitude,pos.coords.longitude,false);},err=>{loading.classList.add('hidden');const cached=readStoredLocation();if(cached){locationPermissionState='denied';cargarClimaDesdeCoordenadas(cached.lat,cached.lon,true);}else{intro.classList.remove('hidden');document.getElementById('btn-text').textContent=err.code===1?'Permiso bloqueado en el navegador':'Reintentar';}} ,{enableHighAccuracy:true,timeout:8000,maximumAge:300000});}
     (async()=>{await readLocationPermission();if(locationPermissionState==='granted')restoreLocationIfPossible();})();
+
+    function formatLastUpdated(){const el=document.getElementById('last-updated');if(!el||!lastUpdatedAt)return;const mins=Math.max(0,Math.round((Date.now()-lastUpdatedAt)/60000));el.textContent=mins<1?'Actualizado ahora':`Actualizado hace ${mins} min`;}
+    function updateLiveClock(){const clock=document.getElementById('live-clock');if(clock)clock.textContent=new Intl.DateTimeFormat('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date());formatLastUpdated();}
+    function toggleTvMode(){tvMode=!tvMode;document.body.classList.toggle('tv-mode',tvMode);localStorage.setItem('metaclima_tv_mode',tvMode?'1':'0');document.querySelectorAll('#tv-toggle,#tv-mode-inline').forEach(button=>{if(button){button.setAttribute('aria-pressed',String(tvMode));button.textContent=tvMode?'▣ Salir TV':'▣ Modo TV';}});if(tvMode&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});if(!tvMode&&document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});}
+    function iniciarRelojYModoTv(){clearInterval(clockTimer);clockTimer=setInterval(updateLiveClock,1000);updateLiveClock();document.body.classList.toggle('tv-mode',tvMode);document.querySelectorAll('#tv-toggle,#tv-mode-inline').forEach(button=>{if(button){button.setAttribute('aria-pressed',String(tvMode));button.textContent=tvMode?'▣ Salir TV':'▣ Modo TV';}});}
+    async function actualizarClimaEnVivo(){if(!currentCoords?.lat||document.hidden)return;try{const [openMeteo,metNorway,historical,nws]=await Promise.all([fetchOpenMeteo(currentCoords.lat,currentCoords.lon),fetchMetNorway(currentCoords.lat,currentCoords.lon).catch(()=>null),fetchHistoricalYesterday(currentCoords.lat,currentCoords.lon).catch(()=>null),fetchNws(currentCoords.lat,currentCoords.lon)]);renderDatos(openMeteo,metNorway,historical,nws);lastUpdatedAt=Date.now();formatLastUpdated();}catch(error){console.info('Actualización en vivo no disponible.');}}
+    function iniciarActualizacionEnVivo(){clearInterval(liveRefreshTimer);liveRefreshTimer=setInterval(actualizarClimaEnVivo,15*60*1000);}
+    iniciarRelojYModoTv();
 
     async function actualizarFondoPorUbicacion(lat, lon) {
       const tag=document.getElementById('location-name');
@@ -514,15 +578,20 @@
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       try {
-        const res = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`, { signal: controller.signal });
+        const res = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`, { signal: controller.signal, headers:{'User-Agent':'MetaClima/1.0'} });
         if (!res.ok) throw new Error(`MET Norway ${res.status}`);
         return await res.json();
       } finally {
         clearTimeout(timeout);
       }
     }
+    async function fetchNws(lat,lon){
+      // NOAA/NWS es gratuito pero solo tiene cobertura operativa para EE.UU. y territorios.
+      if(lat<15||lat>72||lon<-180||lon>-50)return null;
+      try{const headers={'Accept':'application/geo+json','User-Agent':'MetaClima/1.0'};const point=await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,{headers});if(!point.ok)return null;const pointData=await point.json();const hourlyUrl=pointData.properties?.forecastHourly;if(!hourlyUrl)return null;const forecast=await fetch(hourlyUrl,{headers});if(!forecast.ok)return null;const period=(await forecast.json()).properties?.periods?.[0];if(!period)return null;const temp=Number(period.temperature);const pop=Number(period.probabilityOfPrecipitation?.value??0);const windMatch=String(period.windSpeed||'').match(/([0-9]+(?:\.[0-9]+)?)/);const windMph=windMatch?Number(windMatch[1]):0;return{temperature:Number.isFinite(temp)?temp:null,pop:Number.isFinite(pop)?pop:null,wind:Number.isFinite(windMph)?windMph*1.60934:null,shortForecast:period.shortForecast||''};}catch(error){return null;}
+    }
 
-    function renderDatos(om, met, historical=null) {
+    function renderDatos(om, met, historical=null, nws=null) {
       const omTemp = om.current.temperature_2m;
       const omPop = om.hourly.precipitation_probability[0] || 0;
       const omWind = om.current.wind_speed_10m;
@@ -533,9 +602,10 @@
       const metPop = metNext1?.probability_of_precipitation || omPop;
       const metWind = Math.round((metCurrent.wind_speed || omWind / 3.6) * 3.6);
 
-      const avgTemp = ((omTemp + metTemp) / 2).toFixed(1);
-      const avgPop = Math.round((omPop + metPop) / 2);
-      const avgWind = Math.round((omWind + metWind) / 2);
+      const temps=[omTemp,metTemp,nws?.temperature].filter(Number.isFinite),pops=[omPop,metPop,nws?.pop].filter(Number.isFinite),winds=[omWind,metWind,nws?.wind].filter(Number.isFinite);
+      const avgTemp=(temps.reduce((sum,value)=>sum+value,0)/Math.max(1,temps.length)).toFixed(1);
+      const avgPop=Math.round(pops.reduce((sum,value)=>sum+value,0)/Math.max(1,pops.length));
+      const avgWind=Math.round(winds.reduce((sum,value)=>sum+value,0)/Math.max(1,winds.length));
 
       document.getElementById('main-temp').textContent = `${Math.round(avgTemp)}°`;
       document.getElementById('main-pop').textContent = `${avgPop}%`;
@@ -543,6 +613,8 @@
       
       document.getElementById('src-openmeteo').textContent = `${omTemp}°C | ${omPop}% ll.`;
       document.getElementById('src-metnorway').textContent = met ? `${metTemp}°C | ${metPop}% ll.` : 'Sin respuesta · usa Open-Meteo';
+      const sourceNws=document.getElementById('src-noaa');if(sourceNws)sourceNws.textContent=nws?`${Math.round(nws.temperature)}°C | ${Math.round(nws.pop)}% ll.`:'Fuera de cobertura';
+      const sourceStatus=document.getElementById('source-status');if(sourceStatus)sourceStatus.textContent=`${nws?'3':'2'} fuentes activas · Open-Meteo + MET Norway${nws?' + NOAA/NWS':''}`;
 
       document.getElementById('st-val').textContent = `${Math.round(om.current.apparent_temperature)}°C`;
       document.getElementById('pressure-val').textContent = `${Math.round(om.current.surface_pressure)} hPa`;
@@ -553,7 +625,7 @@
       latestWeather={current:om.current,temp:Number(avgTemp),pop:avgPop,wind:avgWind};
       habilitarBriefing();
       renderTemporalCards(om,historical);
-      updateWeatherMaps(currentCoords.lat,currentCoords.lon,Number(avgTemp),avgPop,avgWind);
+      updateWeatherMaps(currentCoords.lat,currentCoords.lon,Number(avgTemp),avgPop,avgWind,Number(om.current.cloud_cover||0));
 
       // RENDER PRÓXIMAS 12 HORAS
       const hourlyBox = document.getElementById('hourly-container');
@@ -630,9 +702,20 @@
       }
     }
 
+    function centerTodayCard(behavior='smooth') {
+      const container=document.getElementById('cards-container'),today=document.getElementById('card-center');
+      if(!container||!today)return;
+      const target=today.offsetLeft-(container.clientWidth-today.offsetWidth)/2;
+      const max=Math.max(0,container.scrollWidth-container.clientWidth);
+      container.scrollTo({left:Math.max(0,Math.min(target,max)),behavior});
+    }
+    let centerTodayTimer=null;
+    function recenterTodayAfterResize(){clearTimeout(centerTodayTimer);centerTodayTimer=setTimeout(()=>{centerTodayCard('instant');updateArrowVisibility();queueSelectionSync();},160);}
+    addEventListener('resize',recenterTodayAfterResize,{passive:true});
+    addEventListener('orientationchange',()=>setTimeout(()=>centerTodayCard('instant'),220),{passive:true});
     function scrollSlider(direction) {
       const container = document.getElementById('cards-container');
-      container.scrollBy({ left: direction * 300, behavior: 'smooth' });
+      container.scrollBy({ left: direction * Math.max(260,container.clientWidth*.82), behavior: 'smooth' });
     }
 
     // CONTROL INTELIGENTE DE VISIBILIDAD DE FLECHAS
@@ -680,26 +763,29 @@
     /* Spin vertical con inercia: la fuerza del gesto decide cuántas vueltas da */
     document.querySelectorAll('[data-tilt-card]').forEach(card=>{
       let gesture=null,spinAnimation=null;
+      const resetGestureCard=()=>{spinAnimation?.cancel();spinAnimation=null;gesture=null;card.classList.remove('vertical-flip-active');card.style.transition='transform .42s cubic-bezier(.12,.72,.2,1)';card.style.transform='perspective(1100px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateY(0) translateZ(0)';setTimeout(()=>{card.style.transform='';card.style.transition='';},440);};
       const finishSpin=event=>{
         if(!gesture)return;
-        const g=gesture,dy=event?.clientY-g.startY||g.lastY-g.startY,elapsed=Math.max(16,(event?.timeStamp||performance.now())-g.startTime),speed=Math.abs(g.velocity||dy/elapsed);
-        if(g.vertical){
-          const direction=dy<0?-1:1;
-          const turns=Math.max(.9,Math.min(8,Math.abs(dy)/150+speed*2.2));
-          const totalAngle=direction*turns*360;
-          const duration=Math.max(700,Math.min(2600,650+turns*230));
-          card.classList.add('vertical-flip-active');
-          spinAnimation?.cancel();
-          spinAnimation=card.animate([
-            {transform:card.style.transform||'perspective(1100px) rotateX(0deg) rotateY(0deg) translateZ(10px)',offset:0},
-            {transform:`perspective(1100px) rotateX(${direction*-7}deg) rotateY(${totalAngle*.48}deg) rotateZ(${direction*4}deg) translateY(${direction*-12}px) translateZ(22px)`,offset:.42},
-            {transform:`perspective(1100px) rotateX(0deg) rotateY(${totalAngle}deg) rotateZ(0deg) translateY(0) translateZ(0)`,offset:1}
-          ],{duration,easing:'cubic-bezier(.12,.72,.2,1)',fill:'forwards'});
-          spinAnimation.onfinish=()=>{card.style.transform='';card.classList.remove('vertical-flip-active');};
-        }
+        const g=gesture,dy=(event?.clientY??g.lastY)-g.startY,elapsed=Math.max(16,(event?.timeStamp||performance.now())-g.startTime),speed=Math.abs(g.velocity||dy/elapsed);
         gesture=null;
+        if(!g.vertical){resetGestureCard();return;}
+        const direction=dy<0?-1:1;
+        const turns=Math.max(.9,Math.min(8,Math.abs(dy)/150+speed*2.2));
+        const totalAngle=direction*turns*360;
+        const duration=Math.max(700,Math.min(2600,650+turns*230));
+        card.classList.add('vertical-flip-active');
+        spinAnimation?.cancel();
+        spinAnimation=card.animate([
+          {transform:card.style.transform||'perspective(1100px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateZ(0)',offset:0},
+          {transform:`perspective(1100px) rotateX(${direction*-7}deg) rotateY(${totalAngle*.48}deg) rotateZ(${direction*4}deg) translateY(${direction*-12}px) translateZ(22px)`,offset:.42},
+          {transform:`perspective(1100px) rotateX(0deg) rotateY(${totalAngle}deg) rotateZ(0deg) translateY(0) translateZ(8px)`,offset:.82},
+          {transform:'perspective(1100px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateY(0) translateZ(0)',offset:1}
+        ],{duration,easing:'cubic-bezier(.12,.72,.2,1)',fill:'forwards'});
+        const animation=spinAnimation;
+        animation.onfinish=()=>{if(spinAnimation===animation){spinAnimation=null;card.style.transform='';card.style.transition='';card.classList.remove('vertical-flip-active');}};
+        animation.oncancel=()=>{if(spinAnimation===animation){spinAnimation=null;card.style.transform='';card.style.transition='';card.classList.remove('vertical-flip-active');}};
       };
-      card.addEventListener('pointerdown',event=>{spinAnimation?.cancel();gesture={startX:event.clientX,startY:event.clientY,lastY:event.clientY,lastTime:event.timeStamp||performance.now(),startTime:event.timeStamp||performance.now(),velocity:0,vertical:false};});
+      card.addEventListener('pointerdown',event=>{resetGestureCard();gesture={startX:event.clientX,startY:event.clientY,lastY:event.clientY,lastTime:event.timeStamp||performance.now(),startTime:event.timeStamp||performance.now(),velocity:0,vertical:false};});
       card.addEventListener('pointermove',event=>{
         if(!gesture)return;
         const dx=event.clientX-gesture.startX,dy=event.clientY-gesture.startY,now=event.timeStamp||performance.now(),dt=Math.max(8,now-gesture.lastTime);
@@ -707,7 +793,7 @@
         if(!gesture.vertical&&Math.abs(dy)>14&&Math.abs(dy)>Math.abs(dx)*1.15)gesture.vertical=true;
         if(gesture.vertical){const preview=Math.max(-34,Math.min(34,dy*.24));card.classList.add('vertical-flip-active');card.style.transform=`perspective(1100px) rotateX(${dy*.025}deg) rotateY(${preview}deg) rotateZ(${preview*.1}deg) translateY(${Math.max(-12,Math.min(12,dy*.08))}px) translateZ(12px)`;}
       });
-      card.addEventListener('pointerup',finishSpin);card.addEventListener('pointercancel',finishSpin);card.addEventListener('pointerleave',event=>{if(gesture?.vertical)finishSpin(event);else gesture=null;});
+      card.addEventListener('pointerup',finishSpin);card.addEventListener('pointercancel',finishSpin);card.addEventListener('pointerleave',event=>{if(gesture)finishSpin(event);else resetGestureCard();});
     });
 
     /* Restauración automática: solo la tarjeta enfocada conserva el movimiento */
@@ -724,7 +810,7 @@
     const queueSelectionSync=()=>{if(selectionFrame)return;selectionFrame=requestAnimationFrame(()=>{selectionFrame=null;syncSelectedCard();});};
     cardsViewport?.addEventListener('scroll',queueSelectionSync,{passive:true});
     addEventListener('resize',queueSelectionSync);
-    setTimeout(syncSelectedCard,80);
+    setTimeout(()=>{centerTodayCard('instant');syncSelectedCard();},120);
 
     /* Motor de atmósfera: profundidad, partículas y clima reactivo */
     const atmosphereCanvas=document.getElementById('weather-atmosphere');

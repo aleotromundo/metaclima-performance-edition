@@ -1,0 +1,48 @@
+name: MetaClima · briefing meteorológico
+
+on:
+  schedule:
+    # GitHub Actions usa UTC. Ajustado a ejecutar aproximadamente cada 2 horas.
+    - cron: '7 */2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-weather-brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Preparar Python y FFmpeg
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade pip
+          python -m pip install requests piper-tts
+
+      - name: Descargar voz argentina Piper
+        run: |
+          mkdir -p models
+          curl -L --fail --retry 3 -o models/es_AR-daniela-high.onnx \
+            'https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_AR/daniela/high/es_AR-daniela-high.onnx?download=true'
+          curl -L --fail --retry 3 -o models/es_AR-daniela-high.onnx.json \
+            'https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_AR/daniela/high/es_AR-daniela-high.onnx.json?download=true'
+
+      - name: Generar y guardar el briefing
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          META_CLIMA_LAT: ${{ secrets.META_CLIMA_LAT }}
+          META_CLIMA_LON: ${{ secrets.META_CLIMA_LON }}
+          META_CLIMA_LOCATION_LABEL: ${{ secrets.META_CLIMA_LOCATION_LABEL }}
+          META_CLIMA_TIMEZONE: ${{ secrets.META_CLIMA_TIMEZONE }}
+          PIPER_MODEL_PATH: models/es_AR-daniela-high.onnx
+        run: python automation/generate_weather_brief.py
