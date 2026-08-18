@@ -110,6 +110,31 @@
     .leaflet-control-attribution{font-size:8px!important;background:rgba(15,23,42,.72)!important;color:#cbd5e1!important}
     .leaflet-control-attribution a{color:#7dd3fc!important}
     .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:#e2e8f0;border:1px solid rgba(125,211,252,.25)}
+    .briefing-module{margin-top:14px;padding:12px;border:1px solid rgba(251,191,36,.28);border-radius:20px;background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(56,189,248,.08));box-shadow:inset 0 0 24px rgba(56,189,248,.05)}
+    .briefing-status{font-size:10px;line-height:1.4;color:rgba(226,232,240,.78);min-height:28px}
+    .briefing-btn{border:1px solid rgba(251,191,36,.55);background:linear-gradient(135deg,rgba(251,191,36,.8),rgba(14,165,233,.85));color:#0f172a;font-size:10px;font-weight:900;border-radius:11px;padding:8px 10px;cursor:pointer;transition:transform .2s ease,filter .2s ease}
+    .briefing-btn:hover{transform:translateY(-1px);filter:brightness(1.1)}
+    .briefing-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .briefing-script{display:none;margin-top:10px;padding:10px;border-radius:14px;background:rgba(15,23,42,.45);font-size:10px;line-height:1.5;color:rgba(241,245,249,.88);max-height:130px;overflow:auto}
+    .briefing-script.visible{display:block}
+    /* Orden temporal final: Ayer → Variables → Hoy → Próximas 12 Horas → Mañana */
+    #cards-track #card-yesterday{order:1}
+    #cards-track #card-left{order:2}
+    #cards-track #card-center{order:3}
+    #cards-track #card-right{order:4}
+    #cards-track #card-tomorrow{order:5}
+    #floating-speaker{position:fixed;right:22px;bottom:58px;z-index:60;width:64px;height:64px;border-radius:24px;border:1px solid rgba(251,191,36,.65);background:linear-gradient(145deg,rgba(251,191,36,.88),rgba(14,165,233,.9));color:#0f172a;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 28px rgba(56,189,248,.28);cursor:pointer;animation:speakerFloat 3.6s ease-in-out infinite;transform-origin:center;transition:filter .2s ease,scale .2s ease}
+    #floating-speaker:hover{filter:brightness(1.12);scale:1.08}
+    #floating-speaker:active{scale:.92}
+    #floating-speaker .speaker-icon{font-size:29px;filter:drop-shadow(0 3px 3px rgba(255,255,255,.38))}
+    #floating-speaker .speaker-ping{position:absolute;inset:-7px;border:1px solid rgba(251,191,36,.46);border-radius:28px;animation:speakerPing 2.4s ease-out infinite;pointer-events:none}
+    #floating-speaker-label{position:fixed;right:92px;bottom:76px;z-index:59;max-width:165px;padding:8px 10px;border:1px solid rgba(255,255,255,.25);border-radius:13px;background:rgba(15,23,42,.8);color:#fef3c7;font-size:10px;font-weight:800;line-height:1.25;backdrop-filter:blur(12px);animation:labelBob 3.6s ease-in-out infinite}
+    #floating-speaker.playing{animation:speakerPulse .8s ease-in-out infinite alternate}
+    @keyframes speakerFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(3deg)}}
+    @keyframes speakerPing{0%{transform:scale(.82);opacity:.8}100%{transform:scale(1.35);opacity:0}}
+    @keyframes speakerPulse{from{box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 20px rgba(251,191,36,.5)}to{box-shadow:0 12px 34px rgba(0,0,0,.42),0 0 42px rgba(56,189,248,.8)}}
+    @keyframes labelBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @media(prefers-reduced-motion:reduce){#floating-speaker,#floating-speaker-label,#floating-speaker .speaker-ping{animation:none!important}}
     @media(max-width:767px){.weather-map-shell{height:132px}.weather-modal-card{padding:10px;border-radius:22px}#expanded-map{height:58vh;min-height:280px}#weather-atmosphere-hud{left:12px;bottom:36px;font-size:8px}footer{padding-bottom:28px!important}}
   </style>
 </head>
@@ -274,6 +299,16 @@
               <span id="src-metnorway" class="font-mono font-bold text-rose-200">--</span>
             </div>
           </div>
+          <div class="briefing-module relative z-10" id="briefing-module">
+            <div class="detail-kicker">MetaClima Daily Brief</div>
+            <div id="briefing-status" class="briefing-status mt-1">Consultá tu ubicación para generar el informe hablado.</div>
+            <div class="flex gap-2 mt-2">
+              <button id="briefing-play" class="briefing-btn" type="button" onclick="generarPodcast()" disabled>▶ Escuchar informe</button>
+              <button id="briefing-stop" class="briefing-btn" type="button" onclick="detenerBriefing()">■ Detener</button>
+            </div>
+            <div id="briefing-script" class="briefing-script"></div>
+            <audio id="briefing-audio" class="hidden" controls></audio>
+          </div>
 
         </div>
 
@@ -353,6 +388,9 @@
     </div>
   </div>
 
+  <div id="floating-speaker-label">Tocame y te cuento el clima</div>
+  <button id="floating-speaker" type="button" aria-label="Escuchar podcast meteorológico" onclick="generarPodcast()"><span class="speaker-ping"></span><span class="speaker-icon">🔊</span></button>
+
   <footer class="w-full p-4 text-center text-xs font-medium text-slate-300 z-10">
     <p>MetaClima — Consenso meteorológico optimizado</p>
   </footer>
@@ -390,6 +428,25 @@
     function abrirDetalle(kind){document.getElementById('modal-map-view').classList.add('hidden');document.getElementById('modal-conditions-view').classList.remove('hidden');populateDetail(kind);document.getElementById('weather-modal').classList.add('open');}
     function cerrarModal(){document.getElementById('weather-modal').classList.remove('open');}
     document.addEventListener('keydown',event=>{if(event.key==='Escape')cerrarModal();});document.getElementById('weather-modal')?.addEventListener('click',event=>{if(event.target.id==='weather-modal')cerrarModal();});
+    let briefingUtterance=null,podcastQueue=[],podcastIndex=0,podcastPlaying=false;
+    function briefingLocation(){return document.getElementById('location-name')?.textContent?.replace(/^⌖ /,'')||'tu ubicación';}
+    function buildLocalPodcast(){const current=latestWeather||{};const y=temporalData.yesterday||{};const t=temporalData.tomorrow||{};const temp=Math.round(current.temp??0),pop=current.pop??0,wind=current.wind??0,city=briefingLocation();const outlook=pop>60?'inestable, con lluvias probables':pop>30?'variable, con posibilidad de precipitaciones':'relativamente estable';return [{host:'A',text:`Buenos días. Esto es MetaClima Daily Brief para ${city}. Arrancamos con ${temp} grados, una probabilidad de lluvia del ${pop} por ciento y viento de ${wind} kilómetros por hora.`},{host:'B',text:`¿Y cómo se presenta la jornada? ¿Tenemos un día tranquilo o conviene estar atentos?`},{host:'A',text:`La lectura combinada de las fuentes indica un escenario ${outlook}. Durante las próximas horas conviene mirar especialmente la evolución de la precipitación y el viento, porque son las variables que pueden cambiar más rápido la sensación del día.`},{host:'B',text:`Vamos a compararlo con ayer. ¿Qué diferencia importante aparece en los datos históricos?`},{host:'A',text:y.max!=null?`Ayer tuvimos una máxima de ${Math.round(y.max)} grados, una mínima de ${Math.round(y.min)} y ${Number(y.rain||0).toFixed(1)} milímetros de precipitación. Esa referencia ayuda a entender el cambio real, no solo la sensación.`:'El histórico de ayer todavía no está disponible para una comparación completa.'},{host:'B',text:`Y mirando hacia adelante, ¿qué nos dice el pronóstico para mañana?`},{host:'A',text:t.max!=null?`Mañana se esperan ${Math.round(t.max)} grados de máxima y ${Math.round(t.min)} de mínima, con una probabilidad de lluvia del ${t.pop==null?'dato no disponible':Math.round(t.pop)+' por ciento'}.`:'El pronóstico de mañana todavía no está disponible.'},{host:'B',text:`Entonces, antes de salir, la mejor estrategia es revisar el mapa, las próximas doce horas y volver a consultar si cambia el cielo.`},{host:'A',text:`Exactamente. Este fue el informe Daily Brief de MetaClima. Datos reales, dos fuentes meteorológicas y una lectura simple para tu día. Nos volvemos a encontrar en la próxima actualización.`}];}
+    function dailyBriefKey(){const day=new Date().toISOString().slice(0,10);const coord=currentCoords?.lat!=null?`${currentCoords.lat.toFixed(2)}_${currentCoords.lon.toFixed(2)}`:'unknown';return `metaclima_daily_brief_${day}_${coord}`;}
+    function readDailyBrief(){try{const cached=JSON.parse(localStorage.getItem(dailyBriefKey())||'null');return cached?.dialogue?.length?cached:null;}catch(error){return null;}}
+    function saveDailyBrief(dialogue,audioUrl=null,weatherSnapshot=latestWeather){try{localStorage.setItem(dailyBriefKey(),JSON.stringify({createdAt:new Date().toISOString(),dialogue,audioUrl,weatherSnapshot,stale:false}));}catch(error){console.info('Caché local no disponible.');}}
+    function markDailyBriefStale(){try{const cached=readDailyBrief();if(cached){cached.stale=true;cached.staleAt=new Date().toISOString();localStorage.setItem(dailyBriefKey(),JSON.stringify(cached));}}catch(error){}}
+    function forecastChangedEnough(previous,next){if(!previous||!next)return false;const tempDelta=Math.abs(Number(previous.temp||0)-Number(next.temp||0));const popDelta=Math.abs(Number(previous.pop||0)-Number(next.pop||0));const windDelta=Math.abs(Number(previous.wind||0)-Number(next.wind||0));const oldCode=previous.current?.weather_code??previous.code;const newCode=next.current?.weather_code??next.code;return tempDelta>=2||popDelta>=25||windDelta>=10||(oldCode!=null&&newCode!=null&&String(oldCode)!==String(newCode));}
+    let briefRefreshTimer=null;
+    async function verificarActualizacionBrief(){if(!currentCoords?.lat||!latestWeather)return;try{const fresh=await fetchOpenMeteo(currentCoords.lat,currentCoords.lon);const freshCurrent={current:fresh.current,temp:Number(fresh.current.temperature_2m),pop:Number(fresh.hourly?.precipitation_probability?.[0]||0),wind:Number(fresh.current.wind_speed_10m||0)};const cached=readDailyBrief();if(cached&&!cached.stale&&forecastChangedEnough(cached.weatherSnapshot,freshCurrent)){markDailyBriefStale();const status=document.getElementById('briefing-status');if(status)status.textContent='Hay una actualización meteorológica importante. Tocá el parlante para regenerar el podcast.';}}catch(error){console.info('Actualización silenciosa no disponible.');}}
+    function iniciarVerificacionBrief(){clearInterval(briefRefreshTimer);briefRefreshTimer=setInterval(verificarActualizacionBrief,90*60*1000);setTimeout(verificarActualizacionBrief,15000);}
+    async function requestPodcastDialogue(){const cached=readDailyBrief();if(cached&&!cached.stale)return cached;const payload={location:briefingLocation(),weather:latestWeather,temporal:temporalData};if(window.METACLIMA_BRIEF_ENDPOINT){const response=await fetch(window.METACLIMA_BRIEF_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok)throw new Error('Brief endpoint '+response.status);const data=await response.json();if(Array.isArray(data.dialogue)){const result={dialogue:data.dialogue,audioUrl:data.audioUrl||null};saveDailyBrief(result.dialogue,result.audioUrl,latestWeather);return result;}}const result={dialogue:buildLocalPodcast(),audioUrl:null};saveDailyBrief(result.dialogue,null,latestWeather);return result;}
+    function chooseSpanishVoices(){const voices=(window.speechSynthesis?.getVoices?.()||[]).filter(v=>/^es(-|_)/i.test(v.lang));return [voices[0]||null,voices.find(v=>v!==voices[0])||voices[0]||null];}
+    function speakNextPodcastSegment(){if(!podcastPlaying||podcastIndex>=podcastQueue.length){podcastPlaying=false;document.getElementById('floating-speaker')?.classList.remove('playing');document.getElementById('briefing-status').textContent='Podcast terminado. Tocá el parlante para escucharlo otra vez.';return;}const segment=podcastQueue[podcastIndex++],voices=chooseSpanishVoices();briefingUtterance=new SpeechSynthesisUtterance(segment.text);briefingUtterance.lang='es-AR';briefingUtterance.rate=segment.host==='A'?.93:.98;briefingUtterance.pitch=segment.host==='A'?.92:1.08;briefingUtterance.voice=segment.host==='A'?voices[0]:voices[1];document.getElementById('briefing-status').textContent=`Podcast en curso · Host ${segment.host==='A'?'meteorólogo':'co-conductora'}`;briefingUtterance.onend=speakNextPodcastSegment;briefingUtterance.onerror=()=>{podcastPlaying=false;document.getElementById('briefing-status').textContent='La voz no pudo reproducirse en este navegador.';document.getElementById('floating-speaker')?.classList.remove('playing');};window.speechSynthesis.speak(briefingUtterance);}
+    async function generarPodcast(){if(!latestWeather){document.getElementById('briefing-status').textContent='Primero consultá tu ubicación para activar el podcast.';return;}detenerBriefing();const status=document.getElementById('briefing-status'),scriptBox=document.getElementById('briefing-script'),cached=readDailyBrief();status.textContent=cached?'Cargando informe guardado de hoy…':'Generando el podcast diario…';try{const result=await requestPodcastDialogue();podcastQueue=result.dialogue||result;podcastIndex=0;scriptBox.textContent=podcastQueue.map(item=>`${item.host==='A'?'METEORÓLOGO':'CO-CONDUCTORA'}: ${item.text}`).join('\\n\\n');scriptBox.classList.add('visible');if(result.audioUrl){const audio=document.getElementById('briefing-audio');audio.src=result.audioUrl;audio.classList.remove('hidden');await audio.play();status.textContent='Reproduciendo informe guardado de hoy.';return;}podcastPlaying=true;document.getElementById('floating-speaker')?.classList.add('playing');speakNextPodcastSegment();}catch(error){console.error(error);status.textContent='No se pudo preparar el podcast. Los datos del dashboard siguen disponibles.';}}
+    function generarBriefing(){return generarPodcast();}
+    function detenerBriefing(){if(window.speechSynthesis)window.speechSynthesis.cancel();const audio=document.getElementById('briefing-audio');if(audio){audio.pause();audio.currentTime=0;}podcastPlaying=false;document.getElementById('floating-speaker')?.classList.remove('playing');const button=document.getElementById('briefing-play');if(button)button.disabled=!latestWeather;}
+    function habilitarBriefing(){const button=document.getElementById('briefing-play'),status=document.getElementById('briefing-status');if(button)button.disabled=false;const cached=readDailyBrief();if(status)status.textContent=cached?.stale?'Hay una actualización importante lista para regenerar. Tocá el parlante.':cached?'Podcast de hoy guardado. Tocá el parlante para escucharlo.':'Podcast diario listo para generar al tocar el parlante.';iniciarVerificacionBrief();}
+
     function abrirDetalleBloque(element){const grid=document.getElementById('conditions-detail-grid');const text=element.innerText.trim().split(/\n/).filter(Boolean);grid.innerHTML=`<div class="col-span-full text-sm font-black text-amber-200 mb-1">Detalle meteorológico</div><div class="glass-pill rounded-2xl p-4 col-span-full"><div class="text-xs uppercase tracking-wider text-sky-200">${text[0]||'Variable'}</div><div class="text-2xl font-black text-white mt-2">${text.slice(1).join(' · ')||'Información disponible'}</div><div class="text-xs text-slate-300 mt-3">Dato consultado dentro del consenso actual de MetaClima.</div></div>`;document.getElementById('modal-map-view').classList.add('hidden');document.getElementById('modal-conditions-view').classList.remove('hidden');document.getElementById('weather-modal').classList.add('open');}
     document.querySelectorAll('#card-left .glass-pill,#card-center .glass-pill,#card-right .glass-pill,#card-yesterday .glass-pill,#card-tomorrow .glass-pill').forEach(block=>{block.setAttribute('role','button');block.setAttribute('tabindex','0');block.addEventListener('click',()=>abrirDetalleBloque(block));block.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirDetalleBloque(block);}});});
     initWeatherMaps();
@@ -547,6 +604,7 @@
 
       actualizarEstiloPorClima(avgTemp, avgPop, om.current.cloud_cover);
       latestWeather={current:om.current,temp:Number(avgTemp),pop:avgPop,wind:avgWind};
+      habilitarBriefing();
       renderTemporalCards(om,historical);
       updateWeatherMaps(currentCoords.lat,currentCoords.lon,Number(avgTemp),avgPop,avgWind);
 

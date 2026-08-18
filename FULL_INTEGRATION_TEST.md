@@ -16,3 +16,11 @@ La vista de escritorio conserva el centro como foco y permite recorrer horizonta
 ## Histórico real de Ayer
 
 Se validó el endpoint `archive-api.open-meteo.com` con una fecha pasada y devuelve máximas, mínimas, precipitación, viento y código meteorológico. La aplicación ahora consulta ese histórico por separado para Ayer, mientras usa el endpoint forecast para Hoy y Mañana. Después del cambio, el HTML recarga sin errores de sintaxis; la consola conserva únicamente la advertencia estándar de Tailwind CDN.
+
+## Daily Brief con parlante flotante
+
+La pantalla inicial conserva su composición y el parlante flotante aparece en la esquina inferior derecha con etiqueta de invitación, animación de flotación y anillo de pulso. La consola solo muestra la advertencia existente de Tailwind CDN; no aparecen errores nuevos.
+
+## Orden final del carrusel
+
+Se validó el orden visual solicitado: Ayer, Variables Locales, Hoy/Consenso, Próximas 12 Horas y Mañana. El mapa permanece asociado debajo de Próximas 12 Horas. La consola no muestra errores nuevos; solo permanece la advertencia conocida de Tailwind CDN.
