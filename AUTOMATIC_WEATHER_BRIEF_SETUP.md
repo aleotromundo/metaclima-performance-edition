@@ -4,7 +4,7 @@ El generador ya quedó preparado en `automation/generate_weather_brief.py` y el 
 
 ## Qué hace
 
-Cada dos horas, el workflow consulta Open-Meteo para las coordenadas configuradas, arma un informe corto adaptado a la hora local, genera un MP3 con la voz gratuita Piper `es_AR-daniela-high`, lo convierte a MP3 y lo sube con una ruta única:
+Cada dos horas, el workflow consulta Open-Meteo para las coordenadas configuradas, envía ese JSON meteorológico real a Gemini para redactar un informe corto adaptado a la hora local, genera un MP3 con la voz gratuita Piper `es_AR-daniela-high`, lo convierte a MP3 y lo sube con una ruta única. Si Gemini no está configurado, el fallback local sigue usando los valores reales consultados; no hay un texto meteorológico fijo.
 
 ```text
 weather-briefs/<location_key>/<YYYY-MM-DD>/<slot>.mp3
@@ -26,6 +26,8 @@ En el repositorio `aleotromundo/metaclima-performance-edition`, crear estos Acti
 | `META_CLIMA_LON` | Longitud del lugar base. |
 | `META_CLIMA_LOCATION_LABEL` | Nombre del barrio o ciudad. |
 | `META_CLIMA_TIMEZONE` | Por ejemplo `America/Argentina/Buenos_Aires`. |
+| `GOOGLE_API_KEY` | Nueva clave de Google Gemini, guardada únicamente como secreto de GitHub. |
+| `GOOGLE_GEMINI_MODEL` | Opcional; por defecto `gemini-2.5-flash`. |
 
 El generador necesita una ubicación base porque un workflow programado no puede pedir permiso GPS a cada visitante. Para soportar muchas ubicaciones distintas, posteriormente se puede convertir el proceso en una cola de ubicaciones administrada desde Supabase.
 

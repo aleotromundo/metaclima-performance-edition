@@ -28,6 +28,8 @@ LOCATION_LABEL = os.environ.get("META_CLIMA_LOCATION_LABEL", "tu barrio")
 TIMEZONE = os.environ.get("META_CLIMA_TIMEZONE", "America/Argentina/Buenos_Aires")
 VOICE_NAME = os.environ.get("PIPER_VOICE", "es_AR-daniela-high")
 PIPER_MODEL_PATH = os.environ.get("PIPER_MODEL_PATH", "models/es_AR-daniela-high.onnx")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+GOOGLE_GEMINI_MODEL = os.environ.get("GOOGLE_GEMINI_MODEL", "gemini-2.5-flash")
 AUDIO_DIR = pathlib.Path(os.environ.get("AUDIO_OUTPUT_DIR", "automation/output"))
 EXPECTED_SLOTS = int(os.environ.get("EXPECTED_DAILY_SLOTS", "12"))
 
@@ -113,6 +115,36 @@ def build_brief(data: dict[str, Any], now: dt.datetime) -> tuple[list[dict[str, 
     return dialogue, snapshot, forecast_hash
 
 
+def generate_ai_dialogue(data: dict[str, Any], snapshot: dict[str, Any], now: dt.datetime) -> list[dict[str, str]]:
+    """Redacta el texto con datos reales; si Gemini no está configurado, usa el fallback real local."""
+    if not GOOGLE_API_KEY:
+        return build_brief(data, now)[0]
+    hour = now.hour
+    moment = "mañana" if 5 <= hour < 12 else "tarde" if 12 <= hour < 19 else "noche" if hour >= 19 or hour < 2 else "madrugada"
+    payload = {"hora_local": now.isoformat(), "franja": moment, "barrio": LOCATION_LABEL, "datos": data, "resumen": snapshot}
+    prompt = ("Escribí un informe meteorológico breve para un vecino, en español rioplatense natural. "
+              "Usá exclusivamente los datos JSON reales de esta ejecución: no inventes valores, no menciones APIs, IA, aplicaciones ni fuentes técnicas. "
+              "Debe durar aproximadamente 45 a 65 segundos al leerse en voz alta, tener cuatro intervenciones del mismo narrador, adaptarse a la franja horaria indicada, "
+              "mencionar temperatura, sensación, nubosidad, lluvia, viento y el panorama siguiente, y cerrar invitando a volver a mirar más tarde. "
+              'Devolvé únicamente JSON con la forma {"dialogue":[{"host":"A","text":"..."}]}. Datos reales: '
+              + json.dumps(payload, ensure_ascii=False))
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{GOOGLE_GEMINI_MODEL}:generateContent"
+    response = requests.post(endpoint, params={"key": GOOGLE_API_KEY}, json={
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.65,
+            "responseMimeType": "application/json",
+            "responseSchema": {"type": "OBJECT", "properties": {"dialogue": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"host": {"type": "STRING"}, "text": {"type": "STRING"}}, "required": ["host", "text"]}}}, "required": ["dialogue"]}
+        }
+    }, timeout=30)
+    response.raise_for_status()
+    raw = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    dialogue = json.loads(raw).get("dialogue", [])
+    if not dialogue:
+        raise RuntimeError("Gemini devolvió un diálogo vacío")
+    return [{"host": "A", "text": str(item["text"]).strip()} for item in dialogue[:5] if str(item.get("text", "")).strip()]
+
+
 def supabase_json(method: str, path: str, **kwargs: Any) -> requests.Response:
     response = session.request(method, f"{SUPABASE_URL}/rest/v1/{path}", timeout=30, **kwargs)
     if not response.ok:
@@ -180,6 +212,7 @@ def main() -> int:
     publish_previous_batch(previous_batch, now)
     data = weather_data()
     dialogue, snapshot, forecast_hash = build_brief(data, now)
+    dialogue = generate_ai_dialogue(data, snapshot, now)
     if should_skip(batch, slot, forecast_hash):
         print(f"SKIP {batch} {slot}: sin cambio meteorológico")
         return 0

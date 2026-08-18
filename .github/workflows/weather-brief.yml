@@ -45,4 +45,6 @@ jobs:
           META_CLIMA_LOCATION_LABEL: ${{ secrets.META_CLIMA_LOCATION_LABEL }}
           META_CLIMA_TIMEZONE: ${{ secrets.META_CLIMA_TIMEZONE }}
           PIPER_MODEL_PATH: models/es_AR-daniela-high.onnx
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_GEMINI_MODEL: gemini-2.5-flash
         run: python automation/generate_weather_brief.py
