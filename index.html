@@ -81,7 +81,12 @@
     #weather-atmosphere-hud:before{content:"";display:inline-block;width:18px;height:1px;margin:0 8px 3px 0;background:#fbbf24;box-shadow:0 0 9px #fbbf24}
     .glass-card{transform-style:preserve-3d;will-change:transform}
     .weather-hero-icon{position:relative;z-index:2}
+    .location-context{display:block;margin-top:4px;font-size:10px;letter-spacing:.08em;color:rgba(224,242,254,.78);text-transform:uppercase}
+    .location-context::before{content:"⌖ ";color:#fbbf24}
+    .location-refresh{animation:locationPulse 1.2s ease-in-out infinite}
+    @keyframes locationPulse{50%{opacity:.42}}
     @media(prefers-reduced-motion:reduce){#weather-atmosphere{display:none}.glass-card{transform:none!important}.weather-hero-icon{animation:none!important}}
+
   </style>
 </head>
 <body id="app-bg" class="bg-slate-950 text-white min-h-screen flex flex-col justify-between font-sans bg-weather relative overflow-x-hidden selection:bg-amber-400 selection:text-slate-900"
@@ -186,7 +191,7 @@
           
           <div class="text-center relative z-10">
             <span id="city-tag" class="inline-block px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500/30 to-sky-500/30 text-amber-200 border border-amber-300/40 mb-2 shadow-lg">
-              ✨ Consenso Inteligente
+              ✨ Consenso Inteligente<span id="location-name" class="location-context">Tu zona</span>
             </span>
 
             <div class="my-2 flex justify-center items-center">
@@ -286,6 +291,7 @@
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude: lat, longitude: lon } = pos.coords;
+          actualizarFondoPorUbicacion(lat, lon);
           document.getElementById('coords-text').textContent = `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
 
           try {
@@ -328,6 +334,41 @@
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
       );
+    }
+
+    async function actualizarFondoPorUbicacion(lat, lon) {
+      const tag=document.getElementById('location-name');
+      const body=document.getElementById('app-bg');
+      tag.classList.add('location-refresh');
+      tag.textContent='Localizando paisaje';
+      try {
+        const res=await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&count=1&language=es&format=json`);
+        const geo=await res.json();
+        const place=geo.results?.[0];
+        const city=place?.name || place?.admin1 || 'Ubicación exacta';
+        const region=[place?.admin1,place?.country].filter(Boolean).join(' · ');
+        tag.textContent=region ? `${city} · ${region}` : city;
+        const query=encodeURIComponent(`${city} ${place?.country || ''} paisaje landmark`);
+        let image='';
+        try {
+          const commons=await fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=1920&format=json&origin=*`);
+          const commonsData=await commons.json();
+          const pages=Object.values(commonsData.query?.pages || {});
+          image=pages.find(page=>page.imageinfo?.[0]?.thumburl)?.imageinfo?.[0]?.thumburl || '';
+        } catch(error) {}
+        if(image){
+          const preload=new Image();
+          preload.onload=()=>{body.style.backgroundImage=`linear-gradient(rgba(15,23,42,.58),rgba(15,23,42,.84)),url('${image}')`;};
+          preload.onerror=()=>{tag.textContent=`${city} · clima local`;};
+          preload.src=image;
+        } else {
+          tag.textContent=`${city} · clima local`;
+        }
+      } catch(error) {
+        tag.textContent='Ubicación exacta · paisaje contextual';
+      } finally {
+        tag.classList.remove('location-refresh');
+      }
     }
 
     async function fetchOpenMeteo(lat, lon) {
