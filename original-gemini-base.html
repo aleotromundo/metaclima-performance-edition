@@ -70,11 +70,6 @@
       background-position: center;
       transition: background-image 1.2s ease-in-out;
     }
-    /* Capa ambiental sutil: mantiene la escena original sin convertirla en otra experiencia */
-    body::before{content:"";position:fixed;inset:-20%;z-index:0;pointer-events:none;background:radial-gradient(circle at 18% 18%,rgba(251,191,36,.12),transparent 22%),radial-gradient(circle at 82% 22%,rgba(56,189,248,.13),transparent 24%),radial-gradient(circle at 50% 90%,rgba(99,102,241,.1),transparent 28%);mix-blend-mode:screen;animation:ambientDrift 18s ease-in-out infinite alternate}
-    header,main,footer{position:relative;z-index:1}
-    @keyframes ambientDrift{0%{transform:translate3d(-1%,0,0) scale(1)}100%{transform:translate3d(1%,1%,0) scale(1.04)}}
-    @media(prefers-reduced-motion:reduce){body::before,.weather-hero-icon,.animate-fade-in{animation:none!important}}
   </style>
 </head>
 <body id="app-bg" class="bg-slate-950 text-white min-h-screen flex flex-col justify-between font-sans bg-weather relative overflow-x-hidden selection:bg-amber-400 selection:text-slate-900"
@@ -282,7 +277,7 @@
           try {
             const [openMeteo, metNorway] = await Promise.all([
               fetchOpenMeteo(lat, lon),
-              fetchMetNorway(lat, lon).catch(() => null)
+              fetchMetNorway(lat, lon)
             ]);
 
             renderDatos(openMeteo, metNorway);
@@ -316,8 +311,7 @@
           loading.classList.add('hidden');
           intro.classList.remove('hidden');
           btnText.textContent = "Reintentar";
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
+        }
       );
     }
 
@@ -327,15 +321,8 @@
     }
 
     async function fetchMetNorway(lat, lon) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-      try {
-        const res = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`, { signal: controller.signal });
-        if (!res.ok) throw new Error(`MET Norway ${res.status}`);
-        return await res.json();
-      } finally {
-        clearTimeout(timeout);
-      }
+      const res = await fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`);
+      return await res.json();
     }
 
     function renderDatos(om, met) {
@@ -343,11 +330,11 @@
       const omPop = om.hourly.precipitation_probability[0] || 0;
       const omWind = om.current.wind_speed_10m;
 
-      const metCurrent = met?.properties?.timeseries?.[0]?.data?.instant?.details || { air_temperature: omTemp, wind_speed: omWind / 3.6 };
-      const metNext1 = met?.properties?.timeseries?.[0]?.data?.next_1_hours?.details;
+      const metCurrent = met.properties.timeseries[0].data.instant.details;
+      const metNext1 = met.properties.timeseries[0].data.next_1_hours?.details;
       const metTemp = metCurrent.air_temperature;
-      const metPop = metNext1?.probability_of_precipitation || omPop;
-      const metWind = Math.round((metCurrent.wind_speed || omWind / 3.6) * 3.6);
+      const metPop = metNext1?.probability_of_precipitation || 0;
+      const metWind = Math.round(metCurrent.wind_speed * 3.6);
 
       const avgTemp = ((omTemp + metTemp) / 2).toFixed(1);
       const avgPop = Math.round((omPop + metPop) / 2);
@@ -358,7 +345,7 @@
       document.getElementById('main-wind').textContent = `${avgWind}`;
       
       document.getElementById('src-openmeteo').textContent = `${omTemp}°C | ${omPop}% ll.`;
-      document.getElementById('src-metnorway').textContent = met ? `${metTemp}°C | ${metPop}% ll.` : 'Sin respuesta · usa Open-Meteo';
+      document.getElementById('src-metnorway').textContent = `${metTemp}°C | ${metPop}% ll.`;
 
       document.getElementById('st-val').textContent = `${Math.round(om.current.apparent_temperature)}°C`;
       document.getElementById('pressure-val').textContent = `${Math.round(om.current.surface_pressure)} hPa`;
